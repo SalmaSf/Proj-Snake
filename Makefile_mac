@@ -7,15 +7,13 @@ CFLAGS = -g $(INCLUDE) -c
 LDFLAGS = -L/opt/homebrew/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lm
 
 rocket: main.o rocket.o
-	$(CC) -o rocket main.o rocket.o $(LDFLAGS)
+    $(CC) -o rocket main.o rocket.o $(LDFLAGS)
 
 main.o: $(SRCDIR)/main.c
-	$(CC) $(CFLAGS) $(SRCDIR)/main.c
+    $(CC) $(CFLAGS) $(SRCDIR)/main.c
 
 rocket.o: $(SRCDIR)/rocket.c $(INCDIR)/rocket.h
-	$(CC) $(CFLAGS) $(SRCDIR)/rocket.c
+    $(CC) $(CFLAGS) $(SRCDIR)/rocket.c
 
 clean:
-	rm -f *.o rocket
-
-	
+    rm -f *.o rocket
