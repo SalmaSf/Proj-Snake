@@ -97,5 +97,5 @@ void close(Game *pGame){
     if(pGame->pRocket) destroyRocket(pGame->pRocket);
     if(pGame->pRenderer) SDL_DestroyRenderer(pGame->pRenderer);
     if(pGame->pWindow) SDL_DestroyWindow(pGame->pWindow);
-    SDL_Quit();
+    SDL_Quit(); //salma test
 }
