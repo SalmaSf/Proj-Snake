@@ -14,7 +14,7 @@ struct game{ //hej!
 typedef struct game Game;
 
 int initiate(Game *pGame);
-void run(Game *pGame);
+void run(Game *pGame);//bush
 void close(Game *pGame);
 void handleInput(Game *pGame,SDL_Event *pEvent);
 
