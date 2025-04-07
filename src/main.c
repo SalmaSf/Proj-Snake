@@ -6,7 +6,7 @@
 #define WINDOW_HEIGHT 960
 //Rani testar
 
-struct game{
+struct game{ //hej!
     SDL_Window *pWindow;
     SDL_Renderer *pRenderer;
     Rocket *pRocket;
