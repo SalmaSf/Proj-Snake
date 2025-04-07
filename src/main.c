@@ -70,7 +70,7 @@ void run(Game *pGame){
         SDL_SetRenderDrawColor(pGame->pRenderer,230,230,230,255);
         drawRocket(pGame->pRocket);
         SDL_RenderPresent(pGame->pRenderer);
-        SDL_Delay(1000/60-15);
+        SDL_Delay(1000/60-15);//Vanessa testar
     }
 }
 
