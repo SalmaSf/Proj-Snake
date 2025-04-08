@@ -1,60 +1,43 @@
+#include <SDL2/SDL.h>
 #include <stdio.h>
- #include <SDL2/SDL.h>
-#include <SDL2/SDL_timer.h>
-#include <SDL2/SDL_image.h>
+#include <stdbool.h>
 
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 960
-
-int initilize();
-
-int main()
+int main(int argv, char** args)
 {
-    return initilize();
-}
+    SDL_Init(SDL_INIT_EVERYTHING);
 
-int initilize()
-{
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0)
+    SDL_Window *window = SDL_CreateWindow("Hello SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+
+    bool isRunning = true;
+    SDL_Event event;
+
+    while (isRunning)
     {
-        printf("error initializing SDL: %s\n ", SDL_GetError());
-        return 1;
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+                isRunning = false;
+                break;
+
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_ESCAPE)
+                {
+                    isRunning = false;
+                }
+            }
+        }
+
+        SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+        SDL_RenderPresent(renderer);
     }
-    SDL_Window *win = SDL_CreateWindow("HELLO",
-                                       SDL_WINDOWPOS_CENTRED,
-                                       SDL_WINDOW_CENTERD,
-                                       WINDOW_WIDTH, WINDOW_HEIGHT, 0);
-    if (!win)
-    {
-        printf("error creating window: %s\n", SDL_GetError());
-        SDL_Quit();
-        return 1;
-    }
 
-    Unit32 render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
-    SDL_Renderer *rend = SDL_CreateRenderer(win, -1, render_flags);
-    if (!rend)
-    {
-        SDL_DestroyWindow(win);
-        SDL_Quit();
-        return 1;
-    }
-
-    /* SDL_Surface* surface = IMG_Load("??????");
-     if (!surface)
-     {
-         printf("eroor creating surface\n");
-         SDL_DestroyRenderer(rend);
-         SDL_DestroyWindoe(win);
-         SDL_Quit();
-         return 1;
-     }*/
-
-    SDL_Delay(5000);
-    SDL_DestroyWindow(win);
-    SDL_Quit();
-
-    printf("Initialization successful!\n");
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     SDL_Quit();
 
     return 0;
