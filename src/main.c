@@ -16,7 +16,7 @@ int initiate(Game *pGame);
 int main(int argv, char** args)
 {
     
-    return initiate;
+    return initiate();
 }
 
 int initiate(Game *pGame)
