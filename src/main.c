@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <SDL.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_image.h>
