@@ -2,7 +2,24 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+struct game{
+    SDL_Window *pWindow;
+    SDL_Renderer *pRenderer;
+    SDL_Texture *pSnakeTexture;
+    SDL_Rect snakeRect;
+    Snake *pSnake;
+};
+typedef struct game Game;
+
+int initiate(Game *pGame); 
+
 int main(int argv, char** args)
+{
+    
+    return initiate;
+}
+
+int initiate(Game *pGame)
 {
     SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -39,6 +56,5 @@ int main(int argv, char** args)
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-
-    return 0;
+    return 1;
 }

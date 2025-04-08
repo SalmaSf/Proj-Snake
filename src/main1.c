@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <SDL.h>
-#include "rocket.h"
+#include "snake.h"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 960
