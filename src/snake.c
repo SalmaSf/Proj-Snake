@@ -1,71 +1,69 @@
 #include <SDL.h>
 #include <SDL_image.h>
-#include "rocket.h"
+#include <math.h>
+#include <stdlib.h>
+#include "snake.h"
 
-struct rocket{
-    float x, y, vx, vy;
-    int angle;
-    int window_width,window_height;
-    SDL_Renderer *pRenderer;
-    SDL_Texture *pTexture;
-    SDL_Rect shipRect;
+struct segment {
+    float x, y;
+    struct segment *next;
 };
 
-Rocket *createRocket(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height){
-    Rocket *pRocket = malloc(sizeof(struct rocket));
-    pRocket->vx=pRocket->vy=0;
-    pRocket->angle=0;
-    pRocket->window_width = window_width;
-    pRocket->window_height = window_height;
-    SDL_Surface *pSurface = IMG_Load("resources/Ship.png");
-    if(!pSurface){
-        printf("Error: %s\n",SDL_GetError());
+struct snake {
+    Segment *head;
+    SDL_Renderer *pRenderer;
+    SDL_Texture *pTexture;
+    SDL_Rect headRect;
+    float speed;
+};
+
+Snake *createSnake(int x, int y, SDL_Renderer *pRenderer) {
+    Snake *pSnake = malloc(sizeof(Snake));
+    pSnake->head = malloc(sizeof(Segment));
+    pSnake->head->x = x;
+    pSnake->head->y = y;
+    pSnake->head->next = NULL;
+    pSnake->pRenderer = pRenderer;
+    pSnake->speed = 3.0f;
+
+    SDL_Surface *pSurface = IMG_Load("resources/snake_head.png");
+    if (!pSurface) {
+        printf("Image Load Error: %s\n", SDL_GetError());
         return NULL;
     }
-    pRocket->pRenderer = pRenderer;
-    pRocket->pTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
+    pSnake->pTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
     SDL_FreeSurface(pSurface);
-    if(!pRocket->pTexture){
-        printf("Error: %s\n",SDL_GetError());
-        return NULL;
+    SDL_QueryTexture(pSnake->pTexture, NULL, NULL, &pSnake->headRect.w, &pSnake->headRect.h);
+    pSnake->headRect.w /= 4;
+    pSnake->headRect.h /= 4;
+
+    return pSnake;
+}
+
+void updateSnake(Snake *pSnake) {
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
+
+    float dx = mouseX - pSnake->head->x;
+    float dy = mouseY - pSnake->head->y;
+    float angle = atan2f(dy, dx);
+
+    pSnake->head->x += cosf(angle) * pSnake->speed;
+    pSnake->head->y += sinf(angle) * pSnake->speed;
+}
+
+void drawSnake(Snake *pSnake) {
+    pSnake->headRect.x = (int)pSnake->head->x - pSnake->headRect.w / 2;
+    pSnake->headRect.y = (int)pSnake->head->y - pSnake->headRect.h / 2;
+    SDL_RenderCopy(pSnake->pRenderer, pSnake->pTexture, NULL, &pSnake->headRect);
+}
+
+void destroySnake(Snake *pSnake) {
+    if (pSnake->head) {
+        free(pSnake->head);
     }
-    SDL_QueryTexture(pRocket->pTexture,NULL,NULL,&(pRocket->shipRect.w),&(pRocket->shipRect.h));
-    pRocket->shipRect.w /=4;
-    pRocket->shipRect.h /=4;
-    pRocket->x=x-pRocket->shipRect.w/2;
-    pRocket->y=y-pRocket->shipRect.h/2;
-    return pRocket;
-}
-
-void turnLeft(Rocket *pRocket){
-    pRocket->angle-=5;
-}
-
-void turnRight(Rocket *pRocket){
-    pRocket->angle+=5;
-}
-
-void accelerate(Rocket *pRocket){
-    pRocket->vx+=0.1*sin(pRocket->angle*2*M_PI/360);
-    pRocket->vy-=0.1*cos(pRocket->angle*2*M_PI/360);
-}
-
-void updateRocket(Rocket *pRocket){
-    pRocket->x+=pRocket->vx;
-    pRocket->y+=pRocket->vy;
-    if(pRocket->x<0) pRocket->x+=pRocket->window_width;
-    else if (pRocket->x>pRocket->window_width) pRocket->x-=pRocket->window_width;
-    if(pRocket->y<0) pRocket->y+=pRocket->window_height;
-    else if(pRocket->y>pRocket->window_height) pRocket->y-=pRocket->window_height;
-    pRocket->shipRect.x=pRocket->x;
-    pRocket->shipRect.y=pRocket->y;
-}
-
-void drawRocket(Rocket *pRocket){
-    SDL_RenderCopyEx(pRocket->pRenderer,pRocket->pTexture,NULL,&(pRocket->shipRect),pRocket->angle,NULL,SDL_FLIP_NONE);
-}
-
-void destroyRocket(Rocket *pRocket){
-    SDL_DestroyTexture(pRocket->pTexture);
-    free(pRocket);
+    if (pSnake->pTexture) {
+        SDL_DestroyTexture(pSnake->pTexture);
+    }
+    free(pSnake);
 }

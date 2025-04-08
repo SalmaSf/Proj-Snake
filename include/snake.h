@@ -1,14 +1,14 @@
-#ifndef rocket_h
-#define rocket_h
+#ifndef SNAKE_H
+#define SNAKE_H
 
-typedef struct rocket Rocket;
+#include <SDL.h>
 
-Rocket *createRocket(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height);
-void updateRocket(Rocket *pRocket);
-void drawRocket(Rocket *pRocket);
-void destroyRocket(Rocket *pRocket);
-void turnLeft(Rocket *pRocket);
-void turnRight(Rocket *pRocket);
-void accelerate(Rocket *pRocket);
+typedef struct segment Segment;
+typedef struct snake Snake;
+
+Snake *createSnake(int x, int y, SDL_Renderer *pRenderer);
+void updateSnake(Snake *pSnake);
+void drawSnake(Snake *pSnake);
+void destroySnake(Snake *pSnake);
 
 #endif

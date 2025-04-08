@@ -1,103 +1,46 @@
-#include <stdio.h>
 #include <SDL.h>
+#include <SDL_image.h>
+#include <stdbool.h>
 #include "snake.h"
 
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 960
-//Rani testar
-//Nishat kan
+const int WINDOW_WIDTH = 800;
+const int WINDOW_HEIGHT = 600;
 
-struct game{ //hej!
-    SDL_Window *pWindow;
-    SDL_Renderer *pRenderer;
-    Rocket *pRocket;
-};
-typedef struct game Game;
+int main(int argc, char *argv[]) {
+    SDL_Init(SDL_INIT_VIDEO);
+    IMG_Init(IMG_INIT_PNG);
 
-int initiate(Game *pGame);
-void run(Game *pGame);//bush
-void close(Game *pGame);
-void handleInput(Game *pGame,SDL_Event *pEvent);
+    SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+    SDL_Renderer *pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
 
-int main(int argv, char** args){
-    Game g={0};
-    if(!initiate(&g)) return 1;
-    run(&g);
-    close(&g);
+    Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer);
+
+    bool isRunning = true;
+    SDL_Event event;
+
+    while (isRunning) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                isRunning = false;
+            }
+        }
+
+        updateSnake(pSnake);
+
+        SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
+        SDL_RenderClear(pRenderer);
+
+        drawSnake(pSnake);
+
+        SDL_RenderPresent(pRenderer);
+        SDL_Delay(16); // ~60 FPS
+    }
+
+    destroySnake(pSnake);
+    SDL_DestroyRenderer(pRenderer);
+    SDL_DestroyWindow(pWindow);
+    IMG_Quit();
+    SDL_Quit();
 
     return 0;
-}
-
-int initiate(Game *pGame){
-    if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER)!=0){
-        printf("Error: %s\n",SDL_GetError());
-        return 0;
-    }
-    pGame->pWindow = SDL_CreateWindow("Rocket Game",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,WINDOW_WIDTH,WINDOW_HEIGHT,0);
-    if(!pGame->pWindow){
-        printf("Error: %s\n",SDL_GetError());
-        close(pGame);
-        return 0;
-    }
-    pGame->pRenderer = SDL_CreateRenderer(pGame->pWindow, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
-    if(!pGame->pRenderer){
-        printf("Error: %s\n",SDL_GetError());
-        close(pGame);
-        return 0;    
-    }
-
-    pGame->pRocket = createRocket(WINDOW_WIDTH/2,WINDOW_HEIGHT/2,pGame->pRenderer,WINDOW_WIDTH,WINDOW_HEIGHT);
-
-    if(!pGame->pRocket){
-        printf("Error: %s\n",SDL_GetError());
-        close(pGame);
-        return 0;
-    }
-    
-    return 1;
-}
-
-void run(Game *pGame){
-    int close_requested = 0;
-    SDL_Event event;
-    while(!close_requested){
-        while(SDL_PollEvent(&event)){
-            if(event.type==SDL_QUIT) close_requested = 1;
-            else handleInput(pGame,&event);
-        }
-        updateRocket(pGame->pRocket);
-
-        SDL_SetRenderDrawColor(pGame->pRenderer,0,0,0,255);
-        SDL_RenderClear(pGame->pRenderer);
-        SDL_SetRenderDrawColor(pGame->pRenderer,230,230,230,255);
-        drawRocket(pGame->pRocket);
-        SDL_RenderPresent(pGame->pRenderer);
-        SDL_Delay(1000/60-15);//Vanessa testar
-    }
-}
-
-void handleInput(Game *pGame,SDL_Event *pEvent){
-    if(pEvent->type == SDL_KEYDOWN){
-        switch(pEvent->key.keysym.scancode){
-            case SDL_SCANCODE_W:
-            case SDL_SCANCODE_UP:
-                accelerate(pGame->pRocket);
-                break;
-            case SDL_SCANCODE_A:
-            case SDL_SCANCODE_LEFT:
-                turnLeft(pGame->pRocket);
-            break;
-            case SDL_SCANCODE_D:
-            case SDL_SCANCODE_RIGHT:
-                turnRight(pGame->pRocket);
-            break;
-        }
-    }
-}
-
-void close(Game *pGame){
-    if(pGame->pRocket) destroyRocket(pGame->pRocket);
-    if(pGame->pRenderer) SDL_DestroyRenderer(pGame->pRenderer);
-    if(pGame->pWindow) SDL_DestroyWindow(pGame->pWindow);
-    SDL_Quit(); //salma test
 }
