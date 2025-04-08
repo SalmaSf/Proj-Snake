@@ -17,3 +17,5 @@ rocket.o: $(SRCDIR)/rocket.c $(INCDIR)/rocket.h
 
 clean:
 	rm -f *.o rocket
+	rm -f rm -f rocket
+	
