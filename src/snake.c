@@ -48,8 +48,24 @@ void updateSnake(Snake *pSnake) {
     float dy = mouseY - pSnake->head->y;
     float angle = atan2f(dy, dx);
 
+    float distance = sqrtf(dx * dx + dy * dy);
+
     pSnake->head->x += cosf(angle) * pSnake->speed;
     pSnake->head->y += sinf(angle) * pSnake->speed;
+
+    if (distance > pSnake->speed)
+    {
+        float moveX = cosf(angle) * pSnake->speed;
+        float moveY = sinf(angle) * pSnake->speed;
+
+        pSnake->head->x += moveX;
+        pSnake->head->y += moveY;
+    }
+    else
+    {
+        pSnake->head->x = mouseX;
+        pSnake->head->y = mouseY;
+    }
 }
 
 void drawSnake(Snake *pSnake) {
