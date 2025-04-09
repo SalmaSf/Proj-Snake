@@ -6,7 +6,7 @@
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[]) 
 {
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
@@ -19,41 +19,31 @@ int main(int argc, char *argv[])
     bool isRunning = true;
     SDL_Event event;
 
-    while (isRunning)
+    while (isRunning) 
     {
-        while (SDL_PollEvent(&event))
+        while (SDL_PollEvent(&event)) 
         {
-            if (event.type == SDL_QUIT)
+            if (event.type == SDL_QUIT) 
             {
-                while (isRunning)
+                isRunning = false;
+            }
+            else if (event.type == SDL_KEYDOWN)
+            {
+                if(event.key.keysym.sym == SDLK_ESCAPE)
                 {
-                    while (SDL_PollEvent(&event))
-                    {
-                        if (event.type == SDL_QUIT)
-                        {
-                            isRunning = false;
-                        }
-                        else if (event.type == SDL_KEYDOWN)
-                        {
-                            if (event.key.keysym.sym == SDLK_ESCAPE)
-                            {
-                                isRunning = false;
-                            }
-                        }
-                    }
-
-                    updateSnake(pSnake);
-
-                    SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
-                    SDL_RenderClear(pRenderer);
-
-                    drawSnake(pSnake);
-
-                    SDL_RenderPresent(pRenderer);
-                    SDL_Delay(16); // ~60 FPS
+                    isRunning = false;
                 }
             }
         }
+        updateSnake(pSnake);
+
+        SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
+        SDL_RenderClear(pRenderer);
+
+        drawSnake(pSnake);
+
+        SDL_RenderPresent(pRenderer);
+        SDL_Delay(16); // ~60 FPS
     }
 
     destroySnake(pSnake);
@@ -64,3 +54,4 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
