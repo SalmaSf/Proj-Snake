@@ -34,8 +34,8 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer) {
     pSnake->pTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
     SDL_FreeSurface(pSurface);
     SDL_QueryTexture(pSnake->pTexture, NULL, NULL, &pSnake->headRect.w, &pSnake->headRect.h);
-    pSnake->headRect.w /= 4;
-    pSnake->headRect.h /= 4;
+    pSnake->headRect.w /= 7;
+    pSnake->headRect.h /= 7;
 
     return pSnake;
 }
