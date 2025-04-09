@@ -6,7 +6,8 @@
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) 
+{
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
 
@@ -18,14 +19,28 @@ int main(int argc, char *argv[]) {
     bool isRunning = true;
     SDL_Event event;
 
-    while (isRunning) {
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
+    while (isRunning) 
+    {
+        while (SDL_PollEvent(&event)) 
+        {
+            if (event.type == SDL_QUIT) 
+            {
                 isRunning = false;
             }
+            else if (event.type == SDL_KEYDOWN)
+            {
+                if(event.key.keysym.sym == SDLK_ESCAPE)
+                {
+                    isRunning = false;
+                }
+            }
         }
+<<<<<<< HEAD
 
         updateSnake(pSnake, WINDOW_WIDTH, WINDOW_HEIGHT);
+=======
+        updateSnake(pSnake);
+>>>>>>> 53449a6da13f7ecd68419ed906f6c9dd2c3369c9
 
         SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
         SDL_RenderClear(pRenderer);

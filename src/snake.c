@@ -34,8 +34,8 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer) {
     pSnake->pTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
     SDL_FreeSurface(pSurface);
     SDL_QueryTexture(pSnake->pTexture, NULL, NULL, &pSnake->headRect.w, &pSnake->headRect.h);
-    pSnake->headRect.w /= 4;
-    pSnake->headRect.h /= 4;
+    pSnake->headRect.w /= 7;
+    pSnake->headRect.h /= 7;
 
     return pSnake;
 }
@@ -48,9 +48,12 @@ void updateSnake(Snake *pSnake, int windowWidth, int windowHeight) {
     float dy = mouseY - pSnake->head->y;
     float angle = atan2f(dy, dx);
 
+    float distance = sqrtf(dx * dx + dy * dy);
+
     pSnake->head->x += cosf(angle) * pSnake->speed;
     pSnake->head->y += sinf(angle) * pSnake->speed;
 
+<<<<<<< HEAD
     // Wrap-around logik
     if (pSnake->head->x < 0) {
         pSnake->head->x = windowWidth - 1;
@@ -62,6 +65,20 @@ void updateSnake(Snake *pSnake, int windowWidth, int windowHeight) {
         pSnake->head->y = windowHeight - 1;
     } else if (pSnake->head->y >= windowHeight) {
         pSnake->head->y = 0;
+=======
+    if (distance > pSnake->speed)
+    {
+        float moveX = cosf(angle) * pSnake->speed;
+        float moveY = sinf(angle) * pSnake->speed;
+
+        pSnake->head->x += moveX;
+        pSnake->head->y += moveY;
+    }
+    else
+    {
+        pSnake->head->x = mouseX;
+        pSnake->head->y = mouseY;
+>>>>>>> 53449a6da13f7ecd68419ed906f6c9dd2c3369c9
     }
 }
 
