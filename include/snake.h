@@ -7,7 +7,7 @@ typedef struct segment Segment;
 typedef struct snake Snake;
 
 Snake *createSnake(int x, int y, SDL_Renderer *pRenderer);
-void updateSnake(Snake *pSnake);
+void updateSnake(Snake *pSnake, int windowWidth, int windowHeight);
 void drawSnake(Snake *pSnake);
 void destroySnake(Snake *pSnake);
 

@@ -40,7 +40,7 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer) {
     return pSnake;
 }
 
-void updateSnake(Snake *pSnake) {
+void updateSnake(Snake *pSnake, int windowWidth, int windowHeight) {
     int mouseX, mouseY;
     SDL_GetMouseState(&mouseX, &mouseY);
 
@@ -50,6 +50,19 @@ void updateSnake(Snake *pSnake) {
 
     pSnake->head->x += cosf(angle) * pSnake->speed;
     pSnake->head->y += sinf(angle) * pSnake->speed;
+
+    // Wrap-around logik
+    if (pSnake->head->x < 0) {
+        pSnake->head->x = windowWidth - 1;
+    } else if (pSnake->head->x >= windowWidth) {
+        pSnake->head->x = 0;
+    }
+    
+    if (pSnake->head->y < 0) {
+        pSnake->head->y = windowHeight - 1;
+    } else if (pSnake->head->y >= windowHeight) {
+        pSnake->head->y = 0;
+    }
 }
 
 void drawSnake(Snake *pSnake) {

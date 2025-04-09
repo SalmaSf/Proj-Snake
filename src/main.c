@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        updateSnake(pSnake);
+        updateSnake(pSnake, WINDOW_WIDTH, WINDOW_HEIGHT);
 
         SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
         SDL_RenderClear(pRenderer);
