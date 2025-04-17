@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     SDL_Texture* pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
     if (!pBackground) return 1;
 
-    Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer);
+    Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     bool isRunning = true;
     SDL_Event event;
