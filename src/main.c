@@ -3,18 +3,34 @@
 #include <stdbool.h>
 #include "snake.h"
 #include "bakgrund.h"
+#include "meny.h"
+
 
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
+
+
+
 int main(int argc, char *argv[])
 {
+ 
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
 
     SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
     SDL_Renderer *pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
     
+    if (!visaStartMeny(pRenderer)) 
+    {
+        SDL_DestroyRenderer(pRenderer);
+        SDL_DestroyWindow(pWindow);
+        IMG_Quit();
+        SDL_Quit();
+        return 1;
+    }
+
+
     SDL_Texture* pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
     if (!pBackground) return 1;
 

@@ -1,9 +1,15 @@
 #ifndef START_MENY_H
 #define START_MENY_H 
+//#ifndef MENY_H
+//#define MENY_H
+
 
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <stdbool.h>
+
+bool visaStartMeny(SDL_Renderer* renderer);
+
 
 // Forward declaration of the struct
 /*typedef struct startButton StartButton;
