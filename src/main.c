@@ -5,12 +5,8 @@
 #include "bakgrund.h"
 #include "meny.h"
 
-
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
-
-
-
 
 int main(int argc, char *argv[])
 {
