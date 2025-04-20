@@ -1,0 +1,60 @@
+#include <SDL.h>
+#include <SDL_net.h>
+#include <string.h>
+#include "snake_client.h"
+
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 2000
+
+static UDPsocket udpSocket;
+static IPaddress serverAddr;
+static UDPpacket* packet;
+
+int initSnakeClient() {
+    if (SDLNet_Init() < 0) {
+        SDL_Log("SDLNet_Init: %s\n", SDLNet_GetError());
+        return 0;
+    }
+
+    udpSocket = SDLNet_UDP_Open(0);
+    if (!udpSocket) {
+        SDL_Log("SDLNet_UDP_Open: %s\n", SDLNet_GetError());
+        return 0;
+    }
+
+    if (SDLNet_ResolveHost(&serverAddr, SERVER_IP, SERVER_PORT) < 0) {
+        SDL_Log("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
+        return 0;
+    }
+
+    packet = SDLNet_AllocPacket(512);
+    if (!packet) {
+        SDL_Log("SDLNet_AllocPacket: %s\n", SDLNet_GetError());
+        return 0;
+    }
+
+    packet->address.host = serverAddr.host;
+    packet->address.port = serverAddr.port;
+
+    return 1;
+}
+
+void sendSnakePosition(int x, int y) {
+    struct {
+        int x, y;
+    } SnakeData;
+
+    SnakeData.x = x;
+    SnakeData.y = y;
+
+    memcpy(packet->data, &SnakeData, sizeof(SnakeData));
+    packet->len = sizeof(SnakeData);
+
+    SDLNet_UDP_Send(udpSocket, -1, packet);
+}
+
+void closeSnakeClient() {
+    SDLNet_FreePacket(packet);
+    SDLNet_UDP_Close(udpSocket);
+    SDLNet_Quit();
+}
