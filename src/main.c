@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "snake.h"
 #include "bakgrund.h"
+#include "snake_client.h"
 
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
@@ -11,12 +12,18 @@ int main(int argc, char *argv[])
 {
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
+    if (!initSnakeClient())
+    {
+        SDL_Log("Failed to initialize UDP client");
+        return 1;
+    }
 
     SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
     SDL_Renderer *pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
-    
-    SDL_Texture* pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
-    if (!pBackground) return 1;
+
+    SDL_Texture *pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
+    if (!pBackground)
+        return 1;
 
     Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer);
 
@@ -39,6 +46,9 @@ int main(int argc, char *argv[])
                 }
             }
         }
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        sendSnakePosition(mouseX, mouseY);
         updateSnake(pSnake);
 
         SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
@@ -58,6 +68,8 @@ int main(int argc, char *argv[])
     SDL_DestroyTexture(pBackground);
     IMG_Quit();
     SDL_Quit();
+
+    closeSnakeClient();
 
     return 0;
 }

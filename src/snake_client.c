@@ -3,8 +3,8 @@
 #include <string.h>
 #include "snake_client.h"
 
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 2000
+#define SERVER_IP "130.229.160.219"
+#define SERVER_PORT 12345
 
 static UDPsocket udpSocket;
 static IPaddress serverAddr;
