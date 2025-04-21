@@ -20,12 +20,11 @@ int main(int argc, char *argv[])
 
     SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
     SDL_Renderer *pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
+    
+    SDL_Texture* pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
+    if (!pBackground) return 1;
 
-    SDL_Texture *pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
-    if (!pBackground)
-        return 1;
-
-    Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer);
+    Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     bool isRunning = true;
     SDL_Event event;
@@ -46,9 +45,11 @@ int main(int argc, char *argv[])
                 }
             }
         }
+
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
         sendSnakePosition(mouseX, mouseY);
+
         updateSnake(pSnake);
 
         SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
