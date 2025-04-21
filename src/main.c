@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
         sendSnakePosition(mouseX, mouseY);
+        receiveServerUpdate();
 
         updateSnake(pSnake);
 

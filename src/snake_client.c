@@ -53,6 +53,17 @@ void sendSnakePosition(int x, int y) {
     SDLNet_UDP_Send(udpSocket, -1, packet);
 }
 
+void receiveServerUpdate() {
+    if (SDLNet_UDP_Recv(udpSocket, packet)) {
+        struct {
+            int x, y;
+        } serverData;
+
+        memcpy(&serverData, packet->data, sizeof(serverData));
+        printf("Received from server: x=%d y=%d\n", serverData.x, serverData.y);
+    }
+}
+
 void closeSnakeClient() {
     SDLNet_FreePacket(packet);
     SDLNet_UDP_Close(udpSocket);

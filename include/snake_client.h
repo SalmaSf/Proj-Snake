@@ -3,6 +3,7 @@
 
 int initSnakeClient();
 void sendSnakePosition(int x, int y);
+void receiveServerUpdate();
 void closeSnakeClient();
 
 #endif
