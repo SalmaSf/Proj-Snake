@@ -1,24 +1,24 @@
+SRCDIR_SERVER=server/src
+SRCDIR_OTHER=Src
+INCDIR=include
+RESOURCES=resources
 
-SRCDIR=./src
-INCDIR=./include
 CC=gcc
-INCLUDE = -I/opt/homebrew/include/SDL2 -I$(INCDIR)
+INCLUDE = -I/opt/homebrew/include/SDL2 -I$(INCDIR) -I/opt/homebrew/include/SDL2_net
 CFLAGS = -g $(INCLUDE) -c -arch arm64
-LDFLAGS = -L/opt/homebrew/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lm -arch arm64
+LDFLAGS = -L/opt/homebrew/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lm -arch arm64
 
-snake: main.o snake.o bakgrund.o
-	$(CC) -o snake main.o snake.o bakgrund.o $(LDFLAGS)
+snakeServer: main.o snake.o bakgrund.o
+	$(CC) -o snakeServer main.o snake.o bakgrund.o $(LDFLAGS)
 
-main.o: $(SRCDIR)/main.c
-	$(CC) $(CFLAGS) $(SRCDIR)/main.c
+main.o: $(SRCDIR_SERVER)/main.c $(INCDIR)/snake_data.h $(INCDIR)/snake.h $(INCDIR)/bakgrund.h
+	$(CC) $(CFLAGS) $(SRCDIR_SERVER)/main.c
 
-snake.o: $(SRCDIR)/snake.c $(INCDIR)/snake.h
-	$(CC) $(CFLAGS) $(SRCDIR)/snake.c
+snake.o: $(SRCDIR_OTHER)/snake.c $(INCDIR)/snake.h $(INCDIR)/snake_data.h
+	$(CC) $(CFLAGS) $(SRCDIR_OTHER)/snake.c
 
-bakgrund.o: $(SRCDIR)/bakgrund.c $(INCDIR)/bakgrund.h
-	$(CC) $(CFLAGS) $(SRCDIR)/bakgrund.c
+bakgrund.o: $(SRCDIR_OTHER)/bakgrund.c $(INCDIR)/bakgrund.h
+	$(CC) $(CFLAGS) $(SRCDIR_OTHER)/bakgrund.c
 
 clean:
-	rm -f *.o snake
-	rm -f rm -f snake
-	
+	rm -f *.o snakeServer

@@ -19,7 +19,7 @@ struct snake
     float speed;
 };
 
-Snake *createSnake(int x, int y, SDL_Renderer *pRenderer)
+Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int windowWidth, int windowHeight)
 {
     Snake *pSnake = malloc(sizeof(Snake));
     pSnake->head = malloc(sizeof(Segment));
@@ -71,6 +71,23 @@ void updateSnake(Snake *pSnake)
         pSnake->head->x = mouseX;
         pSnake->head->y = mouseY;
     }
+}
+// snake.c
+
+void setSnakePosition(Snake *pSnake, float x, float y)
+{
+    pSnake->head->x = x;
+    pSnake->head->y = y;
+}
+
+float getSnakeX(Snake *pSnake)
+{
+    return pSnake->head->x;
+}
+
+float getSnakeY(Snake *pSnake)
+{
+    return pSnake->head->y;
 }
 
 void drawSnake(Snake *pSnake)
