@@ -18,7 +18,7 @@ bool visaStartMeny(SDL_Renderer* renderer)
         return false;
     }
 
-    SDL_Rect knappRect = { 300, 400, 200, 80 }; // normal position
+    SDL_Rect knappRect = { /*300, 400, 200, 80*/ 260, 390, 280, 140 }; // normal position
     SDL_Rect knappVisuellRect = knappRect;     // visuell position (för animation)
     bool isPressed = false;
     bool iMeny = true;
