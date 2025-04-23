@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include "snake.h"
 
+float historyX[MAX_HISTORY];
+float historyY[MAX_HISTORY];
+int historyIndex = 0;
+
 struct segment
 {
     float x, y;
@@ -15,11 +19,15 @@ struct snake
     Segment *head;
     SDL_Renderer *pRenderer;
     SDL_Texture *pTexture;
+    SDL_Texture *pSegmentTexture;
     SDL_Rect headRect;
     float speed;
     int window_width;  // New
     int window_height; // New
+    float headRectAngle;
 };
+
+Uint32 lastSegmentTime = 0;
 
 Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height)
 {
@@ -43,20 +51,64 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
     pSnake->headRect.w /= 7;
     pSnake->headRect.h /= 7;
 
+    SDL_Surface *pSegmentSurface = IMG_Load("resources/limeSlice.png");
+    if (!pSegmentSurface)
+    {
+        printf("Segment Image Load Error: %s\n", SDL_GetError());
+        return NULL;
+    }
+    pSnake->pSegmentTexture = SDL_CreateTextureFromSurface(pRenderer, pSegmentSurface);
+    SDL_FreeSurface(pSegmentSurface);
+
     pSnake->window_width = window_width;
     pSnake->window_height = window_height;
 
     return pSnake;
 }
 
+void addSegment(Snake *pSnake)
+{
+    Segment *newSegment = malloc(sizeof(Segment));
+    Segment *tail = pSnake->head;
+
+    while (tail->next != NULL)
+        tail = tail->next;
+
+    // Placera det nya segmentet precis där sista segmentet är
+    newSegment->x = tail->x;
+    newSegment->y = tail->y;
+    newSegment->next = NULL;
+    tail->next = newSegment;
+}
+
+void updateSegments(Snake *pSnake)
+{
+    Segment *current = pSnake->head->next;
+    int segmentIndex = 1;
+
+    while (current)
+    {
+        int delay = segmentIndex * 4;
+        int index = (historyIndex - delay + MAX_HISTORY) % MAX_HISTORY;
+        current->x = historyX[index];
+        current->y = historyY[index];
+        current = current->next;
+        segmentIndex++;
+    }
+}
+
 void updateSnake(Snake *pSnake)
 {
     int mouseX, mouseY;
     SDL_GetMouseState(&mouseX, &mouseY);
+    float oldX = pSnake->head->x;
+    float oldY = pSnake->head->y;
 
     static float lastAngle = 0.0f;
     float dx = mouseX - pSnake->head->x;
     float dy = mouseY - pSnake->head->y;
+
+    pSnake->headRectAngle = atan2f(dy, dx) * 180.0f / M_PI;
 
     if (mouseX >= 0 && mouseX <= pSnake->window_width &&
         mouseY >= 0 && mouseY <= pSnake->window_height)
@@ -71,8 +123,6 @@ void updateSnake(Snake *pSnake)
 
     if (distance > pSnake->speed)
     {
-        float moveX = cosf(lastAngle) * pSnake->speed;
-        float moveY = sinf(lastAngle) * pSnake->speed;
 
         pSnake->head->x += moveX;
         pSnake->head->y += moveY;
@@ -85,6 +135,7 @@ void updateSnake(Snake *pSnake)
 
     pSnake->head->x += moveX;
     pSnake->head->y += moveY;
+    updateSegments(pSnake);
 
     // Wrap-around
     if (pSnake->head->x < 0)
@@ -96,24 +147,68 @@ void updateSnake(Snake *pSnake)
         pSnake->head->y += pSnake->window_height;
     else if (pSnake->head->y > pSnake->window_height)
         pSnake->head->y -= pSnake->window_height;
+
+    // Spara huvudets position i historik
+    historyX[historyIndex] = pSnake->head->x;
+    historyY[historyIndex] = pSnake->head->y;
+    historyIndex = (historyIndex + 1) % MAX_HISTORY;
+
+    Uint32 now = SDL_GetTicks();
+
+    if (now - lastSegmentTime >= 3000)
+    { // 1000 ms = 1 sekund
+        addSegment(pSnake);
+        lastSegmentTime = now;
+    }
 }
 
 void drawSnake(Snake *pSnake)
 {
-    pSnake->headRect.x = (int)pSnake->head->x - pSnake->headRect.w / 2;
-    pSnake->headRect.y = (int)pSnake->head->y - pSnake->headRect.h / 2;
-    SDL_RenderCopy(pSnake->pRenderer, pSnake->pTexture, NULL, &pSnake->headRect);
+    // Rita segment
+    Segment *seg = pSnake->head->next;
+    SDL_Rect rect;
+    rect.w = pSnake->headRect.w;
+    rect.h = pSnake->headRect.h;
+    while (seg)
+    {
+        rect.x = (int)(seg->x - rect.w / 2);
+        rect.y = (int)(seg->y - rect.h / 2);
+        SDL_RenderCopy(pSnake->pRenderer, pSnake->pSegmentTexture, NULL, &rect);
+        seg = seg->next;
+    }
+
+    // Placera så att bildens topp (huvudet) är vid ormens position
+    pSnake->headRect.x = (int)(pSnake->head->x - pSnake->headRect.w / 2);
+    pSnake->headRect.y = (int)(pSnake->head->y);
+
+    // Rotera runt huvudets position (övre mittpunkt)
+    SDL_Point center = {
+        pSnake->headRect.w / 2, // mitten av bredden
+        pSnake->headRect.h      // toppen av bilden
+    };
+
+    SDL_RenderCopyEx(
+        pSnake->pRenderer,
+        pSnake->pTexture,
+        NULL,
+        &pSnake->headRect,
+        pSnake->headRectAngle + 90,
+        &center,
+        SDL_FLIP_NONE);
 }
 
 void destroySnake(Snake *pSnake)
 {
-    if (pSnake->head)
+    Segment *seg = pSnake->head;
+    while (seg)
     {
-        free(pSnake->head);
+        Segment *next = seg->next;
+        free(seg);
+        seg = next;
     }
     if (pSnake->pTexture)
-    {
         SDL_DestroyTexture(pSnake->pTexture);
-    }
+    if (pSnake->pSegmentTexture)
+        SDL_DestroyTexture(pSnake->pSegmentTexture);
     free(pSnake);
 }
