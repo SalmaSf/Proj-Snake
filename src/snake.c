@@ -42,7 +42,7 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
     pSnake->head->y = y;
     pSnake->head->next = NULL;
     pSnake->pRenderer = pRenderer;
-    pSnake->speed = 2.0f;
+    pSnake->speed = 3.0f;
 
     pSnake->historyIndex = 0;
 
@@ -147,8 +147,7 @@ void updateSnake(Snake *pSnake)
         pSnake->head->y = mouseY;
     }
 
-    pSnake->head->x += moveX;
-    pSnake->head->y += moveY;
+  
     updateSegments(pSnake);
 
     // Wrap-around
