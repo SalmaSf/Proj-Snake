@@ -31,11 +31,11 @@ int main(int argc, char *argv[])
         return 1;
 
     // Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
-    Snake *snake1 = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Topp mitten
+    Snake *snake1 = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);             // Topp mitten
     Snake *snake2 = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Botten mitten
-    Snake *snake3 = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Vänster mitten
+    Snake *snake3 = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);            // Vänster mitten
     Snake *snake4 = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Höger mitten
-    
+
     bool isRunning = true;
     SDL_Event event;
 

@@ -176,9 +176,6 @@ void updateSnake(Snake *pSnake)
         addSegment(pSnake);
         pSnake->lastSegmentTime = now;
     }
-    
-    
-    
 }
 
 void drawSnake(Snake *pSnake)
