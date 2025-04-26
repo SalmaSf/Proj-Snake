@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include "snake.h"
 
-float historyX[MAX_HISTORY];
+/*float historyX[MAX_HISTORY];
 float historyY[MAX_HISTORY];
-int historyIndex = 0;
+int historyIndex = 0;*/
 
 struct segment
 {
@@ -25,9 +25,14 @@ struct snake
     int window_width;  // New
     int window_height; // New
     float headRectAngle;
+
+    float historyX[MAX_HISTORY];
+    float historyY[MAX_HISTORY];
+    int historyIndex;
+    Uint32 lastSegmentTime;
 };
 
-Uint32 lastSegmentTime = 0;
+// Uint32 lastSegmentTime = 0;
 
 Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height)
 {
@@ -37,7 +42,9 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
     pSnake->head->y = y;
     pSnake->head->next = NULL;
     pSnake->pRenderer = pRenderer;
-    pSnake->speed = 3.0f;
+    pSnake->speed = 2.0f;
+
+    pSnake->historyIndex = 0;
 
     SDL_Surface *pSurface = IMG_Load("resources/snake_head.png");
     if (!pSurface)
@@ -92,9 +99,13 @@ void updateSegments(Snake *pSnake)
     while (current)
     {
         int delay = segmentIndex * 4;
-        int index = (historyIndex - delay + MAX_HISTORY) % MAX_HISTORY;
-        current->x = historyX[index];
-        current->y = historyY[index];
+        /* int index = (historyIndex - delay + MAX_HISTORY) % MAX_HISTORY;
+         current->x = historyX[index];
+         current->y = historyY[index];*/
+        int index = (pSnake->historyIndex - delay + MAX_HISTORY) % MAX_HISTORY;
+        current->x = pSnake->historyX[index];
+        current->y = pSnake->historyY[index];
+
         current = current->next;
         segmentIndex++;
     }
@@ -152,17 +163,22 @@ void updateSnake(Snake *pSnake)
         pSnake->head->y -= pSnake->window_height;
 
     // Spara huvudets position i historik
-    historyX[historyIndex] = pSnake->head->x;
+    /*historyX[historyIndex] = pSnake->head->x;
     historyY[historyIndex] = pSnake->head->y;
-    historyIndex = (historyIndex + 1) % MAX_HISTORY;
+    historyIndex = (historyIndex + 1) % MAX_HISTORY;*/
+    pSnake->historyX[pSnake->historyIndex] = pSnake->head->x;
+    pSnake->historyY[pSnake->historyIndex] = pSnake->head->y;
+    pSnake->historyIndex = (pSnake->historyIndex + 1) % MAX_HISTORY;
 
     Uint32 now = SDL_GetTicks();
-
-    if (now - lastSegmentTime >= 3000)
-    { // 1000 ms = 1 sekund
+    if (now - pSnake->lastSegmentTime >= 3000)
+    {
         addSegment(pSnake);
-        lastSegmentTime = now;
+        pSnake->lastSegmentTime = now;
     }
+    
+    
+    
 }
 
 void drawSnake(Snake *pSnake)
@@ -214,4 +230,4 @@ void destroySnake(Snake *pSnake)
     if (pSnake->pSegmentTexture)
         SDL_DestroyTexture(pSnake->pSegmentTexture);
     free(pSnake);
-} 
+}
