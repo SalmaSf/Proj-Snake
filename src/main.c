@@ -30,11 +30,13 @@ int main(int argc, char *argv[])
     if (!pBackground)
         return 1;
 
-    // Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
-    Snake *snake1 = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);             // Topp mitten
-    Snake *snake2 = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Botten mitten
-    Snake *snake3 = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);            // Vänster mitten
-    Snake *snake4 = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Höger mitten
+    Snake *snake[4];
+    snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);             // Topp mitten
+    snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Botten mitten
+    snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);            // Vänster mitten
+    snake[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Höger mitten
+
+    gameLoop(snake, pRenderer, pBackground);
 
     bool isRunning = true;
     SDL_Event event;
@@ -55,32 +57,21 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        // updateSnake(pSnake);
-        updateSnake(snake1);
-        updateSnake(snake2);
-        updateSnake(snake3);
-        updateSnake(snake4);
 
         SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
         SDL_RenderClear(pRenderer);
 
         SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
 
-        // drawSnake(pSnake);
-        drawSnake(snake1);
-        drawSnake(snake2);
-        drawSnake(snake3);
-        drawSnake(snake4);
-
         SDL_RenderPresent(pRenderer);
         SDL_Delay(16); // ~60 FPS
     }
 
     // destroySnake(pSnake);
-    destroySnake(snake1);
-    destroySnake(snake2);
-    destroySnake(snake3);
-    destroySnake(snake4);
+    for (int i = 0; i < 4; i++)
+    {
+        destroySnake(snake[i]);
+    }
 
     SDL_DestroyRenderer(pRenderer);
     SDL_DestroyWindow(pWindow);
