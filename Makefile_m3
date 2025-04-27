@@ -6,8 +6,8 @@ INCLUDE = -I/opt/homebrew/include/SDL2 -I$(INCDIR)
 CFLAGS = -g $(INCLUDE) -c -arch arm64
 LDFLAGS = -L/opt/homebrew/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lm -arch arm64
 
-snake: main.o snake.o bakgrund.o
-	$(CC) -o snake main.o snake.o bakgrund.o $(LDFLAGS)
+snake: main.o snake.o bakgrund.o meny.o
+	$(CC) -o snake main.o snake.o bakgrund.o meny.o $(LDFLAGS)
 
 main.o: $(SRCDIR)/main.c
 	$(CC) $(CFLAGS) $(SRCDIR)/main.c
@@ -17,6 +17,9 @@ snake.o: $(SRCDIR)/snake.c $(INCDIR)/snake.h
 
 bakgrund.o: $(SRCDIR)/bakgrund.c $(INCDIR)/bakgrund.h
 	$(CC) $(CFLAGS) $(SRCDIR)/bakgrund.c
+
+meny.o: $(SRCDIR)/meny.c $(INCDIR)/meny.h
+	$(CC) $(CFLAGS) $(SRCDIR)/meny.c
 
 clean:
 	rm -f *.o snake

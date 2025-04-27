@@ -48,8 +48,11 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
     pSnake->pTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
     SDL_FreeSurface(pSurface);
     SDL_QueryTexture(pSnake->pTexture, NULL, NULL, &pSnake->headRect.w, &pSnake->headRect.h);
-    pSnake->headRect.w /= 7;
-    pSnake->headRect.h /= 7;
+    pSnake->headRect.w /= 12;
+    pSnake->headRect.h /= 12;
+
+    pSnake->window_width = window_width;
+    pSnake->window_height = window_height;
 
     SDL_Surface *pSegmentSurface = IMG_Load("resources/limeSlice.png");
     if (!pSegmentSurface)
@@ -211,4 +214,4 @@ void destroySnake(Snake *pSnake)
     if (pSnake->pSegmentTexture)
         SDL_DestroyTexture(pSnake->pSegmentTexture);
     free(pSnake);
-}
+} 
