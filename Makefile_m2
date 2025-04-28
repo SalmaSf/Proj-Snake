@@ -8,7 +8,7 @@ SDL2_LIB = C:/msys64/mingw64/lib
 
 INCLUDE = -I$(SDL2_INCLUDE) -I$(INCDIR)
 CFLAGS = -g $(INCLUDE) -c
-LDFLAGS = -L$(SDL2_LIB) -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -mwindows -lm
+LDFLAGS = -L$(SDL2_LIB) -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_net -lSDL2_ttf -mwindows -lm
 
 snake: main.o snake.o bakgrund.o meny.o
 	$(CC) -o snake main.o snake.o bakgrund.o meny.o $(LDFLAGS)
