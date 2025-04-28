@@ -6,6 +6,8 @@
 #include <stdbool.h>
 
 bool visaStartMeny(SDL_Renderer* renderer);
+bool visaIPMeny(SDL_Renderer* renderer);
+
 
 #endif
 

@@ -22,5 +22,5 @@ meny.o: $(SRCDIR)/meny.c $(INCDIR)/meny.h
 	$(CC) $(CFLAGS) $(SRCDIR)/meny.c
 
 clean:
-	rm -f *.o snake
-	rm -f rm -f snake
+	rm -f *.o snake *.exe
+

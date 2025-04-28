@@ -1,3 +1,4 @@
+#include <SDL_ttf.h>
 #include <stdlib.h>
 #include <string.h>
 #include <SDL.h>
@@ -18,8 +19,8 @@ bool visaStartMeny(SDL_Renderer* renderer)
         return false;
     }
 
-    SDL_Rect knappRect = { /*300, 400, 200, 80*/ 260, 390, 280, 140 }; // normal position
-    SDL_Rect knappVisuellRect = knappRect;     // visuell position (för animation)
+    SDL_Rect knappRect = { 260, 390, 280, 140 }; 
+    SDL_Rect knappVisuellRect = knappRect;     
     bool isPressed = false;
     bool iMeny = true;
     SDL_Event event;
@@ -29,6 +30,7 @@ bool visaStartMeny(SDL_Renderer* renderer)
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT) {
+                // Endast avsluta hela programmet om användaren stänger fönstret!
                 SDL_DestroyTexture(bakgrund);
                 SDL_DestroyTexture(startKnapp);
                 return false;
@@ -41,7 +43,7 @@ bool visaStartMeny(SDL_Renderer* renderer)
                 if (mx >= knappRect.x && mx <= knappRect.x + knappRect.w &&
                     my >= knappRect.y && my <= knappRect.y + knappRect.h) {
                     isPressed = true;
-                    knappVisuellRect.y += 4; // tryck-effekt: rör knappen nedåt
+                    knappVisuellRect.y += 4; // tryck-effekt
                 }
             }
 
@@ -52,10 +54,9 @@ bool visaStartMeny(SDL_Renderer* renderer)
                 if (isPressed &&
                     mx >= knappRect.x && mx <= knappRect.x + knappRect.w &&
                     my >= knappRect.y && my <= knappRect.y + knappRect.h) {
-                    iMeny = false; // släppte musen på knappen → starta spelet
+                    iMeny = false; // släppte musen på knappen → fortsätt till IP-meny
                 }
 
-                // oavsett var släppet skedde, nollställ tryck-effekt
                 isPressed = false;
                 knappVisuellRect = knappRect;
             }
@@ -70,6 +71,52 @@ bool visaStartMeny(SDL_Renderer* renderer)
 
     SDL_DestroyTexture(bakgrund);
     SDL_DestroyTexture(startKnapp);
-    return true;
+    return true;  // Viktigt: returnera true så att vi går vidare till IP-meny
 }
 
+bool visaIPMeny(SDL_Renderer* renderer)
+{
+    SDL_Texture* bakgrund = IMG_LoadTexture(renderer, "resources/ip_meny_bakgrund.png");
+    if (!bakgrund) {
+        SDL_Log("Kunde inte ladda ip_meny_bakgrund.png: %s", IMG_GetError());
+        return false;
+    }
+
+    // Definiera rektangeln – centrera + flytta ner lite (ca 10-15 pixlar)
+    SDL_Rect inputBox = { 0, 0, 400, 60 };  
+    inputBox.x = (800 - inputBox.w) / 2;   // centrerad horisontellt
+    inputBox.y = (700 - inputBox.h) / 2 + 15;  // lite ner från mitten (15 pixlar ner)
+
+    bool isRunning = true;
+    SDL_Event event;
+
+    while (isRunning)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT || 
+                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) || 
+                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN)) 
+            {
+                isRunning = false;  // Stäng sidan med ESC eller ENTER
+            }
+        }
+
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, bakgrund, NULL, NULL);
+
+        // Rita vit ruta (inputBox)
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);  // vit fyllning
+        SDL_RenderFillRect(renderer, &inputBox);
+
+        // Svart kant runt rutan
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);  // svart kant
+        SDL_RenderDrawRect(renderer, &inputBox);
+
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16); // ca 60 FPS
+    }
+
+    SDL_DestroyTexture(bakgrund);
+    return true;
+}
