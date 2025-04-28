@@ -86,9 +86,18 @@ void closeSnakeClient()
 
 int main(int argc, char *argv[])
 {
-
     SDL_Init(SDL_INIT_VIDEO);
-    IMG_Init(IMG_INIT_PNG);
+    // IMG_Init(IMG_INIT_PNG);
+    int imgFlags = IMG_INIT_PNG;
+    if (!(IMG_Init(imgFlags) & imgFlags))
+    {
+        printf("SDL_image kunde inte initieras! SDL_image Error: %s\n", IMG_GetError());
+        return 1;
+    }
+    else
+    {
+        printf("SDL_image PNG-stöd initierat korrekt!\n");
+    }
 
     SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
     SDL_Renderer *pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
@@ -105,6 +114,16 @@ int main(int argc, char *argv[])
     }
 
     if (!visaStartMeny(pRenderer))
+        // Visa startmeny först
+        if (!visaStartMeny(pRenderer))
+        {
+            SDL_DestroyRenderer(pRenderer);
+            SDL_DestroyWindow(pWindow);
+            IMG_Quit();
+            SDL_Quit();
+            return 1;
+        }
+    if (!visaIPMeny(pRenderer))
     {
         SDL_DestroyRenderer(pRenderer);
         SDL_DestroyWindow(pWindow);
@@ -113,10 +132,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // Starta spelet efter IP-inmatning
     SDL_Texture *pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
     if (!pBackground)
         return 1;
 
+    Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
     Snake *snake[4];
     snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);             // Topp mitten
     snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Botten mitten
@@ -132,24 +153,20 @@ int main(int argc, char *argv[])
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT)
+            if (event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE))
             {
                 isRunning = false;
             }
-            else if (event.type == SDL_KEYDOWN)
-            {
-                if (event.key.keysym.sym == SDLK_ESCAPE)
-                {
-                    isRunning = false;
-                }
-            }
         }
+
+        updateSnake(pSnake);
 
         SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
         SDL_RenderClear(pRenderer);
 
         SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
 
+        drawSnake(pSnake);
         SDL_RenderPresent(pRenderer);
         SDL_Delay(16); // ~60 FPS
     }
