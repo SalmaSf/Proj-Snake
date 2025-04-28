@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
 
     SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
     SDL_Renderer *pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
-    
-    // Visa startmeny först
+
+ // Visa startmeny först
     if (!visaStartMeny(pRenderer)) 
     {
         SDL_DestroyRenderer(pRenderer);
@@ -39,6 +39,14 @@ int main(int argc, char *argv[])
     if (!pBackground) return 1;
 
     Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
+    Snake *snake[4];
+    snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);             // Topp mitten
+    snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Botten mitten
+    snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);            // Vänster mitten
+    snake[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Höger mitten
+
+
+    gameLoop(snake, pRenderer, pBackground);
 
     bool isRunning = true;
     SDL_Event event;
@@ -59,6 +67,7 @@ int main(int argc, char *argv[])
         SDL_RenderClear(pRenderer);
 
         SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
+
         drawSnake(pSnake);
         SDL_RenderPresent(pRenderer);
         SDL_Delay(16); // ~60 FPS
