@@ -1,6 +1,7 @@
 #include <SDL_ttf.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <stdbool.h>
@@ -118,5 +119,59 @@ bool visaIPMeny(SDL_Renderer* renderer)
     }
 
     SDL_DestroyTexture(bakgrund);
+    return true;
+}
+
+#include <math.h> // För sin()
+
+bool visaLobby(SDL_Renderer* renderer)
+{
+    SDL_Texture* lobbyBakgrund = IMG_LoadTexture(renderer, "resources/lobby.png");
+    if (!lobbyBakgrund) {
+        SDL_Log("Kunde inte ladda lobby.png: %s", IMG_GetError());
+        return false;
+    }
+
+    bool isRunning = true;
+    SDL_Event event;
+
+    int frame = 0;
+    const int visaLobbyTidMS = 5000; // Visa lobbyn i 5 sekunder (5000 millisekunder)
+    Uint32 startTime = SDL_GetTicks(); // Tid när lobbyn startar
+
+    SDL_Rect bakgrundRect = {0, 0, 800, 700};
+
+    while (isRunning)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT) 
+            {
+                isRunning = false;
+                break;
+            }
+        }
+
+        frame++;
+
+        Uint32 elapsedTime = SDL_GetTicks() - startTime; // Hur länge har vi varit i lobbyn?
+
+        // Om tiden är slut -> avsluta lobbyn automatiskt
+        if (elapsedTime >= visaLobbyTidMS) {
+            isRunning = false;
+        }
+
+        // Gungning (valfritt, fortfarande aktivt under lobbytid)
+        float offset = sin(frame * 0.1f) * 12;
+        SDL_Rect drawRect = bakgrundRect;
+        drawRect.y += (int)offset;
+
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, lobbyBakgrund, NULL, &drawRect);
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16); // ca 60 FPS
+    }
+
+    SDL_DestroyTexture(lobbyBakgrund);
     return true;
 }

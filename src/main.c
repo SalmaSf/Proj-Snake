@@ -132,6 +132,15 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    if (!visaLobby(pRenderer))
+    {
+        SDL_DestroyRenderer(pRenderer);
+        SDL_DestroyWindow(pWindow);
+        IMG_Quit();
+        SDL_Quit();
+        return 1;
+    }
+
     // Starta spelet efter IP-inmatning
     SDL_Texture *pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
     if (!pBackground)
