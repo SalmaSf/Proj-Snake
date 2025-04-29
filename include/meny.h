@@ -7,7 +7,7 @@
 
 bool visaStartMeny(SDL_Renderer* renderer);
 bool visaIPMeny(SDL_Renderer* renderer);
-
+bool visaLobby(SDL_Renderer* renderer);
 
 #endif
 

@@ -7,7 +7,7 @@
 #include "bakgrund.h"
 #include "meny.h"
 
-#define SERVER_IP "192.168.1.138"
+#define SERVER_IP "130.229.182.107"
 #define SERVER_PORT 12345
 
 const int WINDOW_WIDTH = 800;
@@ -132,6 +132,15 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    if (!visaLobby(pRenderer))
+    {
+        SDL_DestroyRenderer(pRenderer);
+        SDL_DestroyWindow(pWindow);
+        IMG_Quit();
+        SDL_Quit();
+        return 1;
+    }
+
     // Starta spelet efter IP-inmatning
     SDL_Texture *pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
     if (!pBackground)
@@ -158,6 +167,11 @@ int main(int argc, char *argv[])
                 isRunning = false;
             }
         }
+        
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        sendSnakePosition(mouseX, mouseY);
+        receiveServerUpdate();
 
         updateSnake(pSnake);
 
@@ -167,6 +181,7 @@ int main(int argc, char *argv[])
         SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
 
         drawSnake(pSnake);
+       
         SDL_RenderPresent(pRenderer);
         SDL_Delay(16); // ~60 FPS
     }
