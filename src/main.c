@@ -11,7 +11,7 @@
 #include "bakgrund.h"
 #include "meny.h"
 
-#define SERVER_IP "192.168.1.138"
+#define SERVER_IP "130.229.182.107"
 #define SERVER_PORT 12345
 
 const int WINDOW_WIDTH = 800;
@@ -115,14 +115,50 @@ int main(int argc, char *argv[])
     if (!pBackground)
         return 1;
 
+    const char *headTexturePath = "resources/default_head.png";
+    const char *segmentTexturePath = "resources/default_segment.png";
+
+    Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, headTexturePath, segmentTexturePath);
     Snake *snake[4];
-    snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
-    snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
-    snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
-    snake[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
+    snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");               // Topp mitten
+    snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/yellow_head.png", "resources/yellow_body.png"); // Botten mitten
+    snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/green_head.png", "resources/green_body.png");            // Vänster mitten
+    snake[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");     // Höger mitten
 
     gameLoop(snake, pRenderer, pBackground);
 
+    bool isRunning = true;
+    SDL_Event event;
+
+    while (isRunning)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE))
+            {
+                isRunning = false;
+            }
+        }
+
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        sendSnakePosition(mouseX, mouseY);
+        receiveServerUpdate();
+
+        updateSnake(pSnake);
+
+        SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
+        SDL_RenderClear(pRenderer);
+
+        SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
+
+        drawSnake(pSnake);
+
+        SDL_RenderPresent(pRenderer);
+        SDL_Delay(16); // ~60 FPS
+    }
+
+    // destroySnake(pSnake);
     for (int i = 0; i < 4; i++)
     {
         destroySnake(snake[i]);
