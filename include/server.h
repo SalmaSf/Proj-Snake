@@ -3,9 +3,9 @@
 
 #include <SDL_net.h>
 #include <stdbool.h>
-#include "../include/snake.h"
-#include "../include/bakgrund.h"
-#include "../include/snake_data.h"
+#include <snake.h>
+#include <include/bakgrund.h>
+#include <snake_data.h>
 
 #define PORT 12345
 #define BUFFER_SIZE 512

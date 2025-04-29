@@ -1,4 +1,4 @@
-#include "../include/server.h"
+#include <server.h>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_net.h>
