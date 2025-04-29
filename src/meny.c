@@ -122,8 +122,6 @@ bool visaIPMeny(SDL_Renderer* renderer)
     return true;
 }
 
-#include <math.h> // För sin()
-
 bool visaLobby(SDL_Renderer* renderer)
 {
     SDL_Texture* lobbyBakgrund = IMG_LoadTexture(renderer, "resources/lobby.png");
@@ -132,46 +130,100 @@ bool visaLobby(SDL_Renderer* renderer)
         return false;
     }
 
+    // Ladda ormbilder
+    SDL_Texture* ormRosa  = IMG_LoadTexture(renderer, "resources/pink_head.png");
+    SDL_Texture* ormGul   = IMG_LoadTexture(renderer, "resources/purple_head.png");
+    SDL_Texture* ormGrön  = IMG_LoadTexture(renderer, "resources/yellow_head.png");
+    SDL_Texture* ormLila  = IMG_LoadTexture(renderer, "resources/snake_head.png");
+
+    if (!ormRosa || !ormGul || !ormGrön || !ormLila) {
+        SDL_Log("Kunde inte ladda en eller flera ormbilder");
+        SDL_DestroyTexture(lobbyBakgrund);
+        return false;
+    }
+
     bool isRunning = true;
     SDL_Event event;
 
-    int frame = 0;
-    const int visaLobbyTidMS = 5000; // Visa lobbyn i 5 sekunder (5000 millisekunder)
-    Uint32 startTime = SDL_GetTicks(); // Tid när lobbyn startar
+    const int visaLobbyTidMS = 5000;
+    Uint32 startTime = SDL_GetTicks();
 
     SDL_Rect bakgrundRect = {0, 0, 800, 700};
+
+    // Positioner för varje orm (stora huvuden: 170x170)
+    SDL_Rect rosaRect = {15, 15, 170, 170};       // Vänster upp
+    SDL_Rect gulRect  = {615, 15, 170, 170};      // Höger upp
+    SDL_Rect gronRect = {15, 515, 170, 170};      // Vänster ner
+    SDL_Rect lilaRect = {615, 515, 170, 170};     // Höger ner
 
     while (isRunning)
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) 
-            {
+            if (event.type == SDL_QUIT) {
                 isRunning = false;
                 break;
             }
         }
 
-        frame++;
-
-        Uint32 elapsedTime = SDL_GetTicks() - startTime; // Hur länge har vi varit i lobbyn?
-
-        // Om tiden är slut -> avsluta lobbyn automatiskt
+        Uint32 elapsedTime = SDL_GetTicks() - startTime;
         if (elapsedTime >= visaLobbyTidMS) {
             isRunning = false;
         }
 
-        // Gungning (valfritt, fortfarande aktivt under lobbytid)
-        float offset = sin(frame * 0.1f) * 12;
-        SDL_Rect drawRect = bakgrundRect;
-        drawRect.y += (int)offset;
-
         SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, lobbyBakgrund, NULL, &drawRect);
+
+        // Rita stillastående bakgrund
+        SDL_RenderCopy(renderer, lobbyBakgrund, NULL, &bakgrundRect);
+
+        // Rita ormar
+        SDL_RenderCopy(renderer, ormRosa, NULL, &rosaRect);
+        SDL_RenderCopy(renderer, ormGul,  NULL, &gulRect);
+        SDL_RenderCopy(renderer, ormGrön, NULL, &gronRect);
+        SDL_RenderCopy(renderer, ormLila, NULL, &lilaRect);
+
+        // Tunga-animering (blinkar var 300 ms)
+        bool visaTunga = ((SDL_GetTicks() / 300) % 2 == 0);
+        if (visaTunga) {
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+            // Rita tungor
+            SDL_Rect tungaRosa = {
+                rosaRect.x + rosaRect.w / 2 - 3,
+                rosaRect.y + rosaRect.h - 5,
+                6, 10
+            };
+            SDL_Rect tungaGul = {
+                gulRect.x + gulRect.w / 2 - 3,
+                gulRect.y + gulRect.h - 5,
+                6, 10
+            };
+            SDL_Rect tungaGrön = {
+                gronRect.x + gronRect.w / 2 - 3,
+                gronRect.y + gronRect.h - 5,
+                6, 10
+            };
+            SDL_Rect tungaLila = {
+                lilaRect.x + lilaRect.w / 2 - 3,
+                lilaRect.y + lilaRect.h - 5,
+                6, 10
+            };
+
+            SDL_RenderFillRect(renderer, &tungaRosa);
+            SDL_RenderFillRect(renderer, &tungaGul);
+            SDL_RenderFillRect(renderer, &tungaGrön);
+            SDL_RenderFillRect(renderer, &tungaLila);
+        }
+
         SDL_RenderPresent(renderer);
         SDL_Delay(16); // ca 60 FPS
     }
 
     SDL_DestroyTexture(lobbyBakgrund);
+    SDL_DestroyTexture(ormRosa);
+    SDL_DestroyTexture(ormGul);
+    SDL_DestroyTexture(ormGrön);
+    SDL_DestroyTexture(ormLila);
+
     return true;
 }
