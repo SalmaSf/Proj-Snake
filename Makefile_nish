@@ -5,7 +5,7 @@ CC=gcc
 #//INCLUDE = -I$(INCDIR) -I/usr/local/include/SDL2  # eller använd rätt väg beroende på var SDL2 finns
 CFLAGS = -g $(INCLUDE) -c
 INCLUDE = -I/usr/local/include/SDL2 -I./include
-LDFLAGS = -L/usr/local/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lm
+LDFLAGS = -L/usr/local/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lm -lSDL2_mixer
 
 #LDFLAGS = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lm
 

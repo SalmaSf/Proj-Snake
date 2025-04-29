@@ -257,6 +257,7 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
 
                 if (checkCollision(snake[i], snake[j]))
                 {
+
                     printf("Orm %d dödade orm %d!\n", i + 1, j + 1);
                     killSnake(snake[j]);
                 }

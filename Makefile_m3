@@ -4,7 +4,7 @@ INCDIR=./include
 CC=gcc
 INCLUDE = -I/opt/homebrew/include/SDL2 -I$(INCDIR)
 CFLAGS = -g $(INCLUDE) -c -arch arm64
-LDFLAGS = -L/opt/homebrew/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lm -arch arm64
+LDFLAGS = -L/opt/homebrew/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lSDL2_mixer -lm -arch arm64
 
 snake: main.o snake.o bakgrund.o meny.o
 	$(CC) -o snake main.o snake.o bakgrund.o meny.o $(LDFLAGS)

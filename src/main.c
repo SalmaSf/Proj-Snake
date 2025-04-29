@@ -3,6 +3,7 @@
 #include <SDL_net.h>
 #include <string.h>
 #include <stdbool.h>
+#include <SDL_mixer.h>
 #include "snake.h"
 #include "bakgrund.h"
 #include "meny.h"
@@ -113,6 +114,23 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    SDL_Init(SDL_INIT_AUDIO);
+    // Initiera SDL_mixer
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+    {
+        SDL_Log("SDL_mixer init error: %s", Mix_GetError());
+        return 1;
+    }
+
+    // Ladda och spela bakgrundsmusik
+    Mix_Music *music = Mix_LoadMUS("resources/bakgrund.wav");
+    if (!music)
+    {
+        SDL_Log("Failed to load music: %s", Mix_GetError());
+        return 1;
+    }
+    Mix_PlayMusic(music, -1); // -1 = loopa musiken
+
     if (!visaStartMeny(pRenderer))
         // Visa startmeny först
         if (!visaStartMeny(pRenderer))
@@ -151,10 +169,17 @@ int main(int argc, char *argv[])
 
     Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, headTexturePath, segmentTexturePath);
     Snake *snake[4];
-    snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");               // Topp mitten
+    snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");             // Topp mitten
     snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/yellow_head.png", "resources/yellow_body.png"); // Botten mitten
-    snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/green_head.png", "resources/green_body.png");            // Vänster mitten
+    snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/green_head.png", "resources/green_body.png");              // Vänster mitten
     snake[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");     // Höger mitten
+
+    Mix_Chunk *collisionSound = Mix_LoadWAV("resources/snake_rattle.wav");
+    if (!collisionSound)
+    {
+        SDL_Log("Failed to load collision sound: %s", Mix_GetError());
+        return 1;
+    }
 
     gameLoop(snake, pRenderer, pBackground);
 
@@ -168,6 +193,16 @@ int main(int argc, char *argv[])
             if (event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE))
             {
                 isRunning = false;
+            }
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = i + 1; j < 4; j++)
+            {
+                if (checkCollision(snake[i], snake[j]))
+                {
+                    Mix_PlayChannel(-1, collisionSound, 0);
+                }
             }
         }
 
@@ -198,6 +233,10 @@ int main(int argc, char *argv[])
     SDL_DestroyRenderer(pRenderer);
     SDL_DestroyWindow(pWindow);
     SDL_DestroyTexture(pBackground);
+    Mix_FreeChunk(collisionSound);
+    Mix_CloseAudio();
+    Mix_FreeMusic(music);
+
     IMG_Quit();
     SDL_Quit();
 
