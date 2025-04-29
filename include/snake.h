@@ -25,6 +25,9 @@ bool checkCollision(Snake *attacker, Snake *target);
 bool isSnakeAlive(Snake *snake);
 void killSnake(Snake *snake);
 void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground);
+//void sendSnakePosition(int x, int y);
+//void receiveServerUpdate();
+
 
 
 

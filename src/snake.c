@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include "snake.h"
 #include <stdbool.h>
+#include <SDL_ttf.h> 
+
 
 /*float historyX[MAX_HISTORY];
 float historyY[MAX_HISTORY];
@@ -121,7 +123,7 @@ void updateSegments(Snake *pSnake)
 
     while (current)
     {
-        int delay = segmentIndex * 4;
+        int delay = segmentIndex * 5;
         /* int index = (historyIndex - delay + MAX_HISTORY) % MAX_HISTORY;
          current->x = historyX[index];
          current->y = historyY[index];*/
@@ -133,6 +135,7 @@ void updateSegments(Snake *pSnake)
         segmentIndex++;
     }
 }
+
 
 void updateSnake(Snake *pSnake)
 {
@@ -167,8 +170,8 @@ void updateSnake(Snake *pSnake)
         pSnake->head->x = mouseX;
         pSnake->head->y = mouseY;
     }
-    pSnake->head->x += moveX;
-    pSnake->head->y += moveY;
+   // pSnake->head->x += moveX;
+    //pSnake->head->y += moveY;
     // 2. WRAP huvudets position
     if (pSnake->head->x < 0)
         pSnake->head->x += pSnake->window_width;
@@ -235,6 +238,21 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
     bool isRunning = true;
     SDL_Event event;
 
+    // 🚀 Timer-setup direkt i spelet
+    Uint64 startTime = SDL_GetTicks64();
+    int gameTime = -1;
+
+    TTF_Font* font = TTF_OpenFont("GamjaFlower-Regular.ttf", 24);
+    if (!font)
+    {
+        printf("Error loading font: %s\n", TTF_GetError());
+        return;
+    }
+
+    SDL_Color textColor = {255, 255, 255, 255};
+    SDL_Texture* pTimerTexture = NULL;
+    SDL_Rect timerRect;
+
     while (isRunning)
     {
         // Eventhantering
@@ -295,6 +313,28 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
                 updateSnake(snake[i]);
             }
         }
+        int currentTime = (SDL_GetTicks64() - startTime) / 1000;
+        if (currentTime > gameTime)
+        {
+            gameTime = currentTime;
+
+            if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
+
+            char timerText[32];
+            int minutes = gameTime / 60;
+            int seconds = gameTime % 60;
+            sprintf(timerText, "%02d:%02d", minutes, seconds);
+
+            SDL_Surface* pSurface = TTF_RenderText_Solid(font, timerText, textColor);
+            pTimerTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
+
+            timerRect.x = 10;
+            timerRect.y = 10;
+            timerRect.w = pSurface->w;
+            timerRect.h = pSurface->h;
+
+            SDL_FreeSurface(pSurface);
+        }//
 
         // Rita allt
         SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
@@ -309,10 +349,19 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
                 drawSnake(snake[i]);
             }
         }
+         // 🚀 Rita timern
+         if (pTimerTexture)
+         {
+             SDL_RenderCopy(pRenderer, pTimerTexture, NULL, &timerRect);
+         }
+ 
 
         SDL_RenderPresent(pRenderer);
         SDL_Delay(16); // ~60 FPS
     }
+     // 🚀 Städning efter spelet är slut
+     if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
+     TTF_CloseFont(font);
 }
 
 void drawSnake(Snake *pSnake)
@@ -332,13 +381,15 @@ void drawSnake(Snake *pSnake)
 
     // Placera så att bildens topp (huvudet) är vid ormens position
     pSnake->headRect.x = (int)(pSnake->head->x - pSnake->headRect.w / 2);
-    pSnake->headRect.y = (int)(pSnake->head->y);
+    pSnake->headRect.y = (int)(pSnake->head->y - pSnake->headRect.h / 2);
+
 
     // Rotera runt huvudets position (övre mittpunkt)
     SDL_Point center = {
-        pSnake->headRect.w / 2, // mitten av bredden
-        pSnake->headRect.h      // toppen av bilden
+        pSnake->headRect.w / 2,
+        pSnake->headRect.h / 2
     };
+    
 
     SDL_RenderCopyEx(
         pSnake->pRenderer,

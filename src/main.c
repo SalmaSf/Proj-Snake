@@ -1,9 +1,16 @@
+// Fil: main.c
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <SDL_net.h>
 #include <string.h>
 #include <stdbool.h>
+<<<<<<< HEAD
 #include <SDL_mixer.h>
+=======
+#include <stdio.h>
+
+>>>>>>> b6bf55e5d7ac7f7a5615dc5cfa30ce76ba5d49ef
 #include "snake.h"
 #include "bakgrund.h"
 #include "meny.h"
@@ -52,32 +59,6 @@ int initSnakeClient()
     return 1;
 }
 
-void sendSnakePosition(int x, int y)
-{
-    struct
-    {
-        int x, y;
-    } SnakeData;
-    SnakeData.x = x;
-    SnakeData.y = y;
-    memcpy(packet->data, &SnakeData, sizeof(SnakeData));
-    packet->len = sizeof(SnakeData);
-    SDLNet_UDP_Send(udpSocket, -1, packet);
-}
-
-void receiveServerUpdate()
-{
-    if (SDLNet_UDP_Recv(udpSocket, packet))
-    {
-        struct
-        {
-            int x, y;
-        } serverData;
-        memcpy(&serverData, packet->data, sizeof(serverData));
-        printf("Received from server: x=%d y=%d\n", serverData.x, serverData.y);
-    }
-}
-
 void closeSnakeClient()
 {
     SDLNet_FreePacket(packet);
@@ -88,16 +69,12 @@ void closeSnakeClient()
 int main(int argc, char *argv[])
 {
     SDL_Init(SDL_INIT_VIDEO);
-    // IMG_Init(IMG_INIT_PNG);
+    TTF_Init();
     int imgFlags = IMG_INIT_PNG;
     if (!(IMG_Init(imgFlags) & imgFlags))
     {
         printf("SDL_image kunde inte initieras! SDL_image Error: %s\n", IMG_GetError());
         return 1;
-    }
-    else
-    {
-        printf("SDL_image PNG-stöd initierat korrekt!\n");
     }
 
     SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
@@ -114,6 +91,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+<<<<<<< HEAD
     SDL_Init(SDL_INIT_AUDIO);
     // Initiera SDL_mixer
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
@@ -143,6 +121,9 @@ int main(int argc, char *argv[])
         }
     if (!visaIPMeny(pRenderer))
     {
+=======
+    if (!visaStartMeny(pRenderer)) {
+>>>>>>> b6bf55e5d7ac7f7a5615dc5cfa30ce76ba5d49ef
         SDL_DestroyRenderer(pRenderer);
         SDL_DestroyWindow(pWindow);
         IMG_Quit();
@@ -150,8 +131,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (!visaLobby(pRenderer))
-    {
+    if (!visaIPMeny(pRenderer)) {
         SDL_DestroyRenderer(pRenderer);
         SDL_DestroyWindow(pWindow);
         IMG_Quit();
@@ -159,7 +139,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Starta spelet efter IP-inmatning
+    if (!visaLobby(pRenderer)) {
+        SDL_DestroyRenderer(pRenderer);
+        SDL_DestroyWindow(pWindow);
+        IMG_Quit();
+        SDL_Quit();
+        return 1;
+    }
+
     SDL_Texture *pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
     if (!pBackground)
         return 1;
@@ -208,8 +195,8 @@ int main(int argc, char *argv[])
 
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
-        sendSnakePosition(mouseX, mouseY);
-        receiveServerUpdate();
+        //sendSnakePosition(mouseX, mouseY);
+        //receiveServerUpdate();
 
         updateSnake(pSnake);
 
@@ -233,10 +220,15 @@ int main(int argc, char *argv[])
     SDL_DestroyRenderer(pRenderer);
     SDL_DestroyWindow(pWindow);
     SDL_DestroyTexture(pBackground);
+<<<<<<< HEAD
     Mix_FreeChunk(collisionSound);
     Mix_CloseAudio();
     Mix_FreeMusic(music);
 
+=======
+    closeSnakeClient();
+    TTF_Quit();
+>>>>>>> b6bf55e5d7ac7f7a5615dc5cfa30ce76ba5d49ef
     IMG_Quit();
     SDL_Quit();
 
