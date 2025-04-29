@@ -13,7 +13,7 @@ extern int historyIndex;
 typedef struct segment Segment;
 typedef struct snake Snake;
 
-Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height);
+Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height,const char *headTexturePath, const char *segmentTexturePath);
 
 void updateSnake(Snake *pSnake);
 void drawSnake(Snake *pSnake);

@@ -146,12 +146,15 @@ int main(int argc, char *argv[])
     if (!pBackground)
         return 1;
 
-    Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);
+    const char *headTexturePath = "resources/default_head.png";
+    const char *segmentTexturePath = "resources/default_segment.png";
+
+    Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, headTexturePath, segmentTexturePath);
     Snake *snake[4];
-    snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);             // Topp mitten
-    snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Botten mitten
-    snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT);            // Vänster mitten
-    snake[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT); // Höger mitten
+    snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");               // Topp mitten
+    snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png"); // Botten mitten
+    snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");            // Vänster mitten
+    snake[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");     // Höger mitten
 
     gameLoop(snake, pRenderer, pBackground);
 
@@ -167,7 +170,7 @@ int main(int argc, char *argv[])
                 isRunning = false;
             }
         }
-        
+
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
         sendSnakePosition(mouseX, mouseY);
@@ -181,7 +184,7 @@ int main(int argc, char *argv[])
         SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
 
         drawSnake(pSnake);
-       
+
         SDL_RenderPresent(pRenderer);
         SDL_Delay(16); // ~60 FPS
     }
