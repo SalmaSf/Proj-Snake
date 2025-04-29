@@ -1,11 +1,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
-<<<<<<< HEAD
-#include <SDL_ttf.h>  // För text
-=======
 #include <SDL_net.h>
 #include <string.h>
->>>>>>> origin
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -93,16 +89,6 @@ void closeSnakeClient()
 int main(int argc, char *argv[])
 {
     SDL_Init(SDL_INIT_VIDEO);
-<<<<<<< HEAD
-    IMG_Init(IMG_INIT_PNG);
-    TTF_Init(); 
-
-    SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
-    SDL_Renderer *pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
-
-    SDL_Texture* pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
-    if (!pBackground) return 1;
-=======
     // IMG_Init(IMG_INIT_PNG);
     int imgFlags = IMG_INIT_PNG;
     if (!(IMG_Init(imgFlags) & imgFlags))
@@ -117,7 +103,6 @@ int main(int argc, char *argv[])
 
     SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
     SDL_Renderer *pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
->>>>>>> origin
 
     if (!initSnakeClient())
     {
@@ -172,21 +157,6 @@ int main(int argc, char *argv[])
 
     gameLoop(snake, pRenderer, pBackground);
 
-   
-    Uint64 startTime = SDL_GetTicks64();  
-    int gameTime = -1;                    
-    TTF_Font* font = TTF_OpenFont("GamjaFlower-Regular.ttf", 24); // EGEN FONT här!
-    if (!font)
-    {
-        printf("Error loading font: %s\n", TTF_GetError());
-        return 1;
-    }
-
-    SDL_Color textColor = {255, 255, 255, 255}; 
-    SDL_Texture* pTimerTexture = NULL;           
-    SDL_Rect timerRect;                          
- 
-
     bool isRunning = true;
     SDL_Event event;
 
@@ -230,30 +200,16 @@ int main(int argc, char *argv[])
 
         SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
         drawSnake(pSnake);
-<<<<<<< HEAD
-
-        if (pTimerTexture) SDL_RenderCopy(pRenderer, pTimerTexture, NULL, &timerRect); 
-
-=======
->>>>>>> origin
         SDL_RenderPresent(pRenderer);
         SDL_Delay(16);
     }
 
-<<<<<<< HEAD
-
-    if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
-    TTF_CloseFont(font);
-    TTF_Quit();
-    destroySnake(pSnake);
-=======
     // destroySnake(pSnake);
     for (int i = 0; i < 4; i++)
     {
         destroySnake(snake[i]);
     }
 
->>>>>>> origin
     SDL_DestroyRenderer(pRenderer);
     SDL_DestroyWindow(pWindow);
     SDL_DestroyTexture(pBackground);
