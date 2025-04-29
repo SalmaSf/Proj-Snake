@@ -4,7 +4,7 @@
 #include <SDL_net.h>
 #include <stdbool.h>
 #include <snake.h>
-#include <include/bakgrund.h>
+#include <bakgrund.h>
 #include <snake_data.h>
 
 #define PORT 12345
