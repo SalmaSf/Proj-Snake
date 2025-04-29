@@ -36,7 +36,7 @@ struct snake
 
 // Uint32 lastSegmentTime = 0;
 
-Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height,const char *headTexturePath, const char *segmentTexturePath)
+Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height, const char *headTexturePath, const char *segmentTexturePath)
 {
     Snake *pSnake = malloc(sizeof(Snake));
     pSnake->head = malloc(sizeof(Segment));
@@ -57,7 +57,8 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
         return NULL;
     }*/
     SDL_Surface *pSurface = IMG_Load(headTexturePath);
-    if (!pSurface) {
+    if (!pSurface)
+    {
         printf("Image Load Error (head): %s\n", SDL_GetError());
         free(pSnake->head);
         free(pSnake);
@@ -66,20 +67,23 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
     pSnake->pTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
     SDL_FreeSurface(pSurface);
     SDL_QueryTexture(pSnake->pTexture, NULL, NULL, &pSnake->headRect.w, &pSnake->headRect.h);
-    pSnake->headRect.w /= 12;
-    pSnake->headRect.h /= 12;
+    // pSnake->headRect.w /= 12;
+    // pSnake->headRect.h /= 12;
+    pSnake->headRect.w = 45; // Sätt en fast bredd för huvudet
+    pSnake->headRect.h = 45; // Sätt en fast höjd för huvudet
 
     pSnake->window_width = window_width;
     pSnake->window_height = window_height;
 
-   /*SDL_Surface *pSegmentSurface = IMG_Load("resources/limeSlice.png");
+    /*SDL_Surface *pSegmentSurface = IMG_Load("resources/limeSlice.png");
+     if (!pSegmentSurface)
+     {
+         printf("Segment Image Load Error: %s\n", SDL_GetError());
+         return NULL;
+     }*/
+    SDL_Surface *pSegmentSurface = IMG_Load(segmentTexturePath);
     if (!pSegmentSurface)
     {
-        printf("Segment Image Load Error: %s\n", SDL_GetError());
-        return NULL;
-    }*/
-    SDL_Surface *pSegmentSurface = IMG_Load(segmentTexturePath);
-    if (!pSegmentSurface) {
         printf("Image Load Error (segment): %s\n", SDL_GetError());
         SDL_DestroyTexture(pSnake->pTexture);
         free(pSnake->head);
