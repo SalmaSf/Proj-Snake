@@ -119,11 +119,11 @@ void addSegment(Snake *pSnake)
 void updateSegments(Snake *pSnake)
 {
     Segment *current = pSnake->head->next;
-    int segmentIndex = 3;
+    int segmentIndex = 1;
 
     while (current)
     {
-        int delay = segmentIndex * 3;
+        int delay = segmentIndex * 5;
         /* int index = (historyIndex - delay + MAX_HISTORY) % MAX_HISTORY;
          current->x = historyX[index];
          current->y = historyY[index];*/
@@ -380,13 +380,15 @@ void drawSnake(Snake *pSnake)
 
     // Placera så att bildens topp (huvudet) är vid ormens position
     pSnake->headRect.x = (int)(pSnake->head->x - pSnake->headRect.w / 2);
-    pSnake->headRect.y = (int)(pSnake->head->y);
+    pSnake->headRect.y = (int)(pSnake->head->y - pSnake->headRect.h / 2);
+
 
     // Rotera runt huvudets position (övre mittpunkt)
     SDL_Point center = {
-        pSnake->headRect.w / 2, // mitten av bredden
-        pSnake->headRect.h      // toppen av bilden
+        pSnake->headRect.w / 2,
+        pSnake->headRect.h / 2
     };
+    
 
     SDL_RenderCopyEx(
         pSnake->pRenderer,
