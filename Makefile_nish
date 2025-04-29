@@ -2,9 +2,12 @@
 SRCDIR=./src
 INCDIR=./include
 CC=gcc
-INCLUDE = -I$(INCDIR) -I/usr/local/include/SDL2  # eller använd rätt väg beroende på var SDL2 finns
+#//INCLUDE = -I$(INCDIR) -I/usr/local/include/SDL2  # eller använd rätt väg beroende på var SDL2 finns
 CFLAGS = -g $(INCLUDE) -c
-LDFLAGS = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lm
+INCLUDE = -I/usr/local/include/SDL2 -I./include
+LDFLAGS = -L/usr/local/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lm
+
+#LDFLAGS = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lm
 
 snake: main.o snake.o bakgrund.o meny.o
 	$(CC) -o snake main.o snake.o bakgrund.o meny.o $(LDFLAGS)
