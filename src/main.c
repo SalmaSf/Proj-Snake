@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -5,8 +6,6 @@
 #include <SDL_mixer.h>
 #include <string.h>
 #include <stdbool.h>
-#include <stdio.h>
-
 #include "snake.h"
 #include "bakgrund.h"
 #include "meny.h"
@@ -21,52 +20,16 @@ static UDPsocket udpSocket;
 static IPaddress serverAddr;
 static UDPpacket *packet;
 
-int initSnakeClient()
-{
-    if (SDLNet_Init() < 0)
-    {
-        SDL_Log("SDLNet_Init: %s\n", SDLNet_GetError());
-        return 0;
-    }
-
-    udpSocket = SDLNet_UDP_Open(0);
-    if (!udpSocket)
-    {
-        SDL_Log("SDLNet_UDP_Open: %s\n", SDLNet_GetError());
-        return 0;
-    }
-
-    if (SDLNet_ResolveHost(&serverAddr, SERVER_IP, SERVER_PORT) < 0)
-    {
-        SDL_Log("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
-        return 0;
-    }
-
-    packet = SDLNet_AllocPacket(512);
-    if (!packet)
-    {
-        SDL_Log("SDLNet_AllocPacket: %s\n", SDLNet_GetError());
-        return 0;
-    }
-
-    packet->address.host = serverAddr.host;
-    packet->address.port = serverAddr.port;
-
-    return 1;
-}
-
-void closeSnakeClient()
-{
-    SDLNet_FreePacket(packet);
-    SDLNet_UDP_Close(udpSocket);
-    SDLNet_Quit();
-}
+int initSnakeClient(void);
+void sendSnakePosition(int x, int y);
+void receiveServerUpdate(void);
+void closeSnakeClient(void);
 
 int main(int argc, char *argv[])
 {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     TTF_Init();
-    
+
     int imgFlags = IMG_INIT_PNG;
     if (!(IMG_Init(imgFlags) & imgFlags))
     {
@@ -138,7 +101,7 @@ int main(int argc, char *argv[])
     const char *segmentTexturePath = "resources/default_segment.png";
 
     Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, headTexturePath, segmentTexturePath);
-    
+
     Snake *snake[4];
     snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");
     snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/yellow_head.png", "resources/yellow_body.png");
@@ -180,8 +143,8 @@ int main(int argc, char *argv[])
 
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
-        // sendSnakePosition(mouseX, mouseY);
-        // receiveServerUpdate();
+        sendSnakePosition(mouseX, mouseY);
+        receiveServerUpdate();
 
         updateSnake(pSnake);
 
@@ -215,4 +178,71 @@ int main(int argc, char *argv[])
     SDL_Quit();
 
     return 0;
+}
+
+int initSnakeClient()
+{
+    if (SDLNet_Init() < 0)
+    {
+        SDL_Log("SDLNet_Init: %s\n", SDLNet_GetError());
+        return 0;
+    }
+
+    udpSocket = SDLNet_UDP_Open(0);
+    if (!udpSocket)
+    {
+        SDL_Log("SDLNet_UDP_Open: %s\n", SDLNet_GetError());
+        return 0;
+    }
+
+    if (SDLNet_ResolveHost(&serverAddr, SERVER_IP, SERVER_PORT) < 0)
+    {
+        SDL_Log("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
+        return 0;
+    }
+
+    packet = SDLNet_AllocPacket(512);
+    if (!packet)
+    {
+        SDL_Log("SDLNet_AllocPacket: %s\n", SDLNet_GetError());
+        return 0;
+    }
+
+    packet->address.host = serverAddr.host;
+    packet->address.port = serverAddr.port;
+
+    return 1;
+}
+
+void sendSnakePosition(int x, int y)
+{
+    struct
+    {
+        int x, y;
+    } SnakeData;
+    SnakeData.x = x;
+    SnakeData.y = y;
+    memcpy(packet->data, &SnakeData, sizeof(SnakeData));
+    packet->len = sizeof(SnakeData);
+    SDLNet_UDP_Send(udpSocket, -1, packet);
+}
+
+void receiveServerUpdate()
+{
+    if (SDLNet_UDP_Recv(udpSocket, packet))
+    {
+        struct
+        {
+            int x, y;
+        } serverData;
+        memcpy(&serverData, packet->data, sizeof(serverData));
+        printf("Received from server: x=%d y=%d\n", serverData.x, serverData.y);
+    }
+}
+
+void closeSnakeClient()
+{
+    SDLNet_FreePacket(packet);
+    SDLNet_UDP_Close(udpSocket);
+    SDLNet_Quit();
 }
