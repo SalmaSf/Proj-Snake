@@ -1,16 +1,12 @@
-// Fil: main.c
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_net.h>
+#include <SDL_mixer.h>
 #include <string.h>
 #include <stdbool.h>
-<<<<<<< HEAD
-#include <SDL_mixer.h>
-=======
 #include <stdio.h>
 
->>>>>>> b6bf55e5d7ac7f7a5615dc5cfa30ce76ba5d49ef
 #include "snake.h"
 #include "bakgrund.h"
 #include "meny.h"
@@ -68,14 +64,30 @@ void closeSnakeClient()
 
 int main(int argc, char *argv[])
 {
-    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     TTF_Init();
+    
     int imgFlags = IMG_INIT_PNG;
     if (!(IMG_Init(imgFlags) & imgFlags))
     {
         printf("SDL_image kunde inte initieras! SDL_image Error: %s\n", IMG_GetError());
         return 1;
     }
+
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+    {
+        SDL_Log("SDL_mixer init error: %s", Mix_GetError());
+        return 1;
+    }
+
+    Mix_Music *music = Mix_LoadMUS("resources/bakgrund.wav");
+    if (!music)
+    {
+        SDL_Log("Failed to load music: %s", Mix_GetError());
+        return 1;
+    }
+
+    Mix_PlayMusic(music, -1); // -1 = loopa musiken
 
     SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
     SDL_Renderer *pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
@@ -91,39 +103,17 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-<<<<<<< HEAD
-    SDL_Init(SDL_INIT_AUDIO);
-    // Initiera SDL_mixer
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
-    {
-        SDL_Log("SDL_mixer init error: %s", Mix_GetError());
-        return 1;
-    }
-
-    // Ladda och spela bakgrundsmusik
-    Mix_Music *music = Mix_LoadMUS("resources/bakgrund.wav");
-    if (!music)
-    {
-        SDL_Log("Failed to load music: %s", Mix_GetError());
-        return 1;
-    }
-    Mix_PlayMusic(music, -1); // -1 = loopa musiken
-
     if (!visaStartMeny(pRenderer))
-        // Visa startmeny först
-        if (!visaStartMeny(pRenderer))
-        {
-            SDL_DestroyRenderer(pRenderer);
-            SDL_DestroyWindow(pWindow);
-            IMG_Quit();
-            SDL_Quit();
-            return 1;
-        }
+    {
+        SDL_DestroyRenderer(pRenderer);
+        SDL_DestroyWindow(pWindow);
+        IMG_Quit();
+        SDL_Quit();
+        return 1;
+    }
+
     if (!visaIPMeny(pRenderer))
     {
-=======
-    if (!visaStartMeny(pRenderer)) {
->>>>>>> b6bf55e5d7ac7f7a5615dc5cfa30ce76ba5d49ef
         SDL_DestroyRenderer(pRenderer);
         SDL_DestroyWindow(pWindow);
         IMG_Quit();
@@ -131,15 +121,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (!visaIPMeny(pRenderer)) {
-        SDL_DestroyRenderer(pRenderer);
-        SDL_DestroyWindow(pWindow);
-        IMG_Quit();
-        SDL_Quit();
-        return 1;
-    }
-
-    if (!visaLobby(pRenderer)) {
+    if (!visaLobby(pRenderer))
+    {
         SDL_DestroyRenderer(pRenderer);
         SDL_DestroyWindow(pWindow);
         IMG_Quit();
@@ -155,11 +138,12 @@ int main(int argc, char *argv[])
     const char *segmentTexturePath = "resources/default_segment.png";
 
     Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, headTexturePath, segmentTexturePath);
+    
     Snake *snake[4];
-    snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");             // Topp mitten
-    snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/yellow_head.png", "resources/yellow_body.png"); // Botten mitten
-    snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/green_head.png", "resources/green_body.png");              // Vänster mitten
-    snake[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");     // Höger mitten
+    snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");
+    snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/yellow_head.png", "resources/yellow_body.png");
+    snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/green_head.png", "resources/green_body.png");
+    snake[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");
 
     Mix_Chunk *collisionSound = Mix_LoadWAV("resources/snake_rattle.wav");
     if (!collisionSound)
@@ -182,6 +166,7 @@ int main(int argc, char *argv[])
                 isRunning = false;
             }
         }
+
         for (int i = 0; i < 4; i++)
         {
             for (int j = i + 1; j < 4; j++)
@@ -195,8 +180,8 @@ int main(int argc, char *argv[])
 
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
-        //sendSnakePosition(mouseX, mouseY);
-        //receiveServerUpdate();
+        // sendSnakePosition(mouseX, mouseY);
+        // receiveServerUpdate();
 
         updateSnake(pSnake);
 
@@ -211,7 +196,6 @@ int main(int argc, char *argv[])
         SDL_Delay(16); // ~60 FPS
     }
 
-    // destroySnake(pSnake);
     for (int i = 0; i < 4; i++)
     {
         destroySnake(snake[i]);
@@ -220,15 +204,13 @@ int main(int argc, char *argv[])
     SDL_DestroyRenderer(pRenderer);
     SDL_DestroyWindow(pWindow);
     SDL_DestroyTexture(pBackground);
-<<<<<<< HEAD
-    Mix_FreeChunk(collisionSound);
-    Mix_CloseAudio();
-    Mix_FreeMusic(music);
 
-=======
+    Mix_FreeChunk(collisionSound);
+    Mix_FreeMusic(music);
+    Mix_CloseAudio();
+
     closeSnakeClient();
     TTF_Quit();
->>>>>>> b6bf55e5d7ac7f7a5615dc5cfa30ce76ba5d49ef
     IMG_Quit();
     SDL_Quit();
 
