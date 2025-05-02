@@ -15,7 +15,7 @@ bool visaStartMeny(SDL_Renderer* renderer)
 
     if (!bakgrund || !startKnapp) {
         SDL_Log("Kunde inte ladda menybilder: %s", IMG_GetError());
-        if (bakgrund) SDL_DestroyTexture(bakgrund);
+        if (bakgrund) SDL_DestroyTexture(bakgrund); 
         if (startKnapp) SDL_DestroyTexture(startKnapp);
         return false;
     }
@@ -39,7 +39,7 @@ bool visaStartMeny(SDL_Renderer* renderer)
 
             if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
                 int mx = event.button.x;
-                int my = event.button.y;
+                int my = event.button.y; 
 
                 if (mx >= knappRect.x && mx <= knappRect.x + knappRect.w &&
                     my >= knappRect.y && my <= knappRect.y + knappRect.h) {
@@ -136,7 +136,7 @@ bool visaLobby(SDL_Renderer* renderer)
     SDL_Texture* ormGrön  = IMG_LoadTexture(renderer, "resources/yellow_head.png");
     SDL_Texture* ormLila  = IMG_LoadTexture(renderer, "resources/snake_head.png");
 
-    if (!ormRosa || !ormGul || !ormGrön || !ormLila) {
+    if (!ormRosa || !ormGul || !ormGrön || !ormLila) { //ändra namn
         SDL_Log("Kunde inte ladda en eller flera ormbilder");
         SDL_DestroyTexture(lobbyBakgrund);
         return false;
@@ -226,4 +226,155 @@ bool visaLobby(SDL_Renderer* renderer)
     SDL_DestroyTexture(ormLila);
 
     return true;
+}
+
+int visaResultatskärm(SDL_Renderer* renderer, bool vann, float tid)
+{
+    // 1. Ladda bakgrund
+    SDL_Texture* background = IMG_LoadTexture(renderer, "resources/You_win.png");
+    if (!background)
+    {
+        SDL_Log("Kunde inte ladda You_won.png: %s", IMG_GetError());
+        return 0;
+    }
+
+    // 2. Ladda font
+    TTF_Font* font = TTF_OpenFont("GamjaFlower-Regular.ttf", 40);
+    TTF_SetFontStyle(font, TTF_STYLE_ITALIC);            // Kursiv
+    if (!font)
+    {
+        SDL_Log("Kunde inte ladda font: %s", TTF_GetError());
+        SDL_DestroyTexture(background);
+        return 0;
+    }
+
+    SDL_Color vit = {255, 255, 255, 255};
+
+    // 3. Skapa tidstext
+    char tidText[64];
+    int min = (int)tid / 60;
+    int sek = (int)tid % 60;
+    sprintf(tidText, "Time: %02d:%02d", min, sek);
+
+    SDL_Surface* tidSurface = TTF_RenderText_Solid(font, tidText, vit);
+    SDL_Texture* tidTex = SDL_CreateTextureFromSurface(renderer, tidSurface);
+    SDL_FreeSurface(tidSurface);
+    SDL_Rect tidRect = {320, 290, tidSurface->w, tidSurface->h}; // Skala upp 20%
+
+    // 4. Definiera klickbar knapp
+    SDL_Rect quitKnapp = {275, 420, 250, 60}; // justera efter din bild
+    SDL_Rect visuellKnapp = quitKnapp;
+    bool isPressed = false;
+
+    // 5. Event-loop
+    SDL_Event event;
+    bool running = true;
+
+    while (running)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+                running = false;
+
+            // Musen trycks ned
+            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+            {
+                int mx = event.button.x;
+                int my = event.button.y;
+
+                if (mx >= quitKnapp.x && mx <= quitKnapp.x + quitKnapp.w &&
+                    my >= quitKnapp.y && my <= quitKnapp.y + quitKnapp.h)
+                {
+                    isPressed = true;
+                    visuellKnapp.y += 4;
+                }
+            }
+
+            // Musen släpps
+            if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT)
+            {
+                int mx = event.button.x;
+                int my = event.button.y;
+
+                if (isPressed &&
+                    mx >= quitKnapp.x && mx <= quitKnapp.x + quitKnapp.w &&
+                    my >= quitKnapp.y && my <= quitKnapp.y + quitKnapp.h)
+                {
+                    // Klickade på knappen
+                    SDL_DestroyTexture(background);
+                    SDL_DestroyTexture(tidTex);
+                    TTF_CloseFont(font);
+                    return 0;
+                }
+
+                isPressed = false;
+                visuellKnapp = quitKnapp;
+            }
+
+            // Tangentbordsalternativ
+            if (event.type == SDL_KEYDOWN)
+            {
+                if (event.key.keysym.sym == SDLK_q || event.key.keysym.sym == SDLK_ESCAPE)
+                {
+                    running = false;
+                }
+            }
+        }
+
+        // Rendera
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, background, NULL, NULL);
+        SDL_RenderCopy(renderer, tidTex, NULL, &tidRect);
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16);
+    }
+
+    // Städning
+    SDL_DestroyTexture(background);
+    SDL_DestroyTexture(tidTex);
+    TTF_CloseFont(font);
+
+    return 0;
+}
+
+void keepWatching(Snake* snake[], SDL_Renderer* renderer, SDL_Texture* background)
+{
+    SDL_Event event;
+    bool running = true;
+
+    while (running)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+                running = false;
+            if (event.type == SDL_KEYDOWN)
+            {
+                if (event.key.keysym.sym == SDLK_q || event.key.keysym.sym == SDLK_ESCAPE)
+                    running = false;
+            }
+        }
+
+        // Uppdatera levande ormar
+        for (int i = 0; i < 4; i++)
+        {
+            if (isSnakeAlive(snake[i]))
+                updateSnake(snake[i]);
+        }
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+
+        SDL_RenderCopy(renderer, background, NULL, NULL);
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (isSnakeAlive(snake[i]))
+                drawSnake(snake[i]);
+        }
+
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16);
+    }
 }

@@ -12,6 +12,10 @@ extern int historyIndex;
 
 typedef struct segment Segment;
 typedef struct snake Snake;
+typedef struct {
+    bool win;
+    float time;
+} GameResult;
 
 Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height,const char *headTexturePath, const char *segmentTexturePath);
 
@@ -24,7 +28,7 @@ void updateSegments(Snake *pSnake);
 bool checkCollision(Snake *attacker, Snake *target);
 bool isSnakeAlive(Snake *snake);
 void killSnake(Snake *snake);
-void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground);
+GameResult gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground, int spelarIndex);
 //void sendSnakePosition(int x, int y);
 //void receiveServerUpdate();
 

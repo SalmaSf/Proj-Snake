@@ -5,12 +5,7 @@
 #include <SDL_net.h>
 #include <string.h>
 #include <stdbool.h>
-<<<<<<< HEAD
 #include <SDL_mixer.h>
-=======
-#include <stdio.h>
-
->>>>>>> b6bf55e5d7ac7f7a5615dc5cfa30ce76ba5d49ef
 #include "snake.h"
 #include "bakgrund.h"
 #include "meny.h"
@@ -91,7 +86,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-<<<<<<< HEAD
     SDL_Init(SDL_INIT_AUDIO);
     // Initiera SDL_mixer
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
@@ -109,21 +103,17 @@ int main(int argc, char *argv[])
     }
     Mix_PlayMusic(music, -1); // -1 = loopa musiken
 
-    if (!visaStartMeny(pRenderer))
         // Visa startmeny först
-        if (!visaStartMeny(pRenderer))
-        {
-            SDL_DestroyRenderer(pRenderer);
-            SDL_DestroyWindow(pWindow);
-            IMG_Quit();
-            SDL_Quit();
-            return 1;
-        }
+    if (!visaStartMeny(pRenderer))
+    {
+        SDL_DestroyRenderer(pRenderer);
+        SDL_DestroyWindow(pWindow);
+        IMG_Quit();
+        SDL_Quit();
+        return 1;
+    }
     if (!visaIPMeny(pRenderer))
     {
-=======
-    if (!visaStartMeny(pRenderer)) {
->>>>>>> b6bf55e5d7ac7f7a5615dc5cfa30ce76ba5d49ef
         SDL_DestroyRenderer(pRenderer);
         SDL_DestroyWindow(pWindow);
         IMG_Quit();
@@ -168,8 +158,29 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    gameLoop(snake, pRenderer, pBackground);
-
+    int spelarIndex = 0; // ← byt till 1, 2, 3 beroende på vilken klient du testar just nu
+    GameResult result = gameLoop(snake, pRenderer, pBackground,spelarIndex); 
+    int val = visaResultatskärm(pRenderer, result.win, result.time);
+    if (val == 0) {
+        /*for (int i = 0; i < 4; i++) {
+            destroySnake(snake[i]);
+        }*/
+        SDL_DestroyRenderer(pRenderer);
+        SDL_DestroyWindow(pWindow);
+        SDL_DestroyTexture(pBackground);
+        Mix_FreeMusic(music);
+        Mix_CloseAudio();
+        IMG_Quit();
+        SDL_Quit();
+        return 0;
+    }
+    else if (val == 1) {
+        keepWatching(snake, pRenderer, pBackground); 
+    }
+    else if (val == 2) {
+        main(argc, argv);
+        return 0;
+    }
     bool isRunning = true;
     SDL_Event event;
 
@@ -196,7 +207,7 @@ int main(int argc, char *argv[])
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
         //sendSnakePosition(mouseX, mouseY);
-        //receiveServerUpdate();
+        //receiveServerUpdate(); 
 
         updateSnake(pSnake);
 
@@ -220,15 +231,10 @@ int main(int argc, char *argv[])
     SDL_DestroyRenderer(pRenderer);
     SDL_DestroyWindow(pWindow);
     SDL_DestroyTexture(pBackground);
-<<<<<<< HEAD
     Mix_FreeChunk(collisionSound);
     Mix_CloseAudio();
     Mix_FreeMusic(music);
 
-=======
-    closeSnakeClient();
-    TTF_Quit();
->>>>>>> b6bf55e5d7ac7f7a5615dc5cfa30ce76ba5d49ef
     IMG_Quit();
     SDL_Quit();
 

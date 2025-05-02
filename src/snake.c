@@ -6,11 +6,6 @@
 #include <stdbool.h>
 #include <SDL_ttf.h> 
 
-
-/*float historyX[MAX_HISTORY];
-float historyY[MAX_HISTORY];
-int historyIndex = 0;*/
-
 struct segment
 {
     float x, y;
@@ -25,8 +20,8 @@ struct snake
     SDL_Texture *pSegmentTexture;
     SDL_Rect headRect;
     float speed;
-    int window_width;  // New
-    int window_height; // New
+    int window_width;  
+    int window_height; 
     float headRectAngle;
 
     float historyX[MAX_HISTORY];
@@ -35,8 +30,6 @@ struct snake
     Uint32 lastSegmentTime;
     bool isAlive;
 };
-
-// Uint32 lastSegmentTime = 0;
 
 Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height, const char *headTexturePath, const char *segmentTexturePath)
 {
@@ -52,12 +45,6 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
 
     pSnake->isAlive = true;
 
-    /*SDL_Surface *pSurface = IMG_Load("resources/snake_head.png");
-    if (!pSurface)
-    {
-        printf("Image Load Error: %s\n", SDL_GetError());
-        return NULL;
-    }*/
     SDL_Surface *pSurface = IMG_Load(headTexturePath);
     if (!pSurface)
     {
@@ -69,20 +56,13 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
     pSnake->pTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
     SDL_FreeSurface(pSurface);
     SDL_QueryTexture(pSnake->pTexture, NULL, NULL, &pSnake->headRect.w, &pSnake->headRect.h);
-    // pSnake->headRect.w /= 12;
-    // pSnake->headRect.h /= 12;
+    
     pSnake->headRect.w = 45; // Sätt en fast bredd för huvudet
     pSnake->headRect.h = 45; // Sätt en fast höjd för huvudet
 
     pSnake->window_width = window_width;
     pSnake->window_height = window_height;
 
-    /*SDL_Surface *pSegmentSurface = IMG_Load("resources/limeSlice.png");
-     if (!pSegmentSurface)
-     {
-         printf("Segment Image Load Error: %s\n", SDL_GetError());
-         return NULL;
-     }*/
     SDL_Surface *pSegmentSurface = IMG_Load(segmentTexturePath);
     if (!pSegmentSurface)
     {
@@ -124,9 +104,6 @@ void updateSegments(Snake *pSnake)
     while (current)
     {
         int delay = segmentIndex * 5;
-        /* int index = (historyIndex - delay + MAX_HISTORY) % MAX_HISTORY;
-         current->x = historyX[index];
-         current->y = historyY[index];*/
         int index = (pSnake->historyIndex - delay + MAX_HISTORY) % MAX_HISTORY;
         current->x = pSnake->historyX[index];
         current->y = pSnake->historyY[index];
@@ -149,7 +126,7 @@ void updateSnake(Snake *pSnake)
     pSnake->headRectAngle = atan2f(dy, dx) * 180.0f / M_PI;
 
     if (mouseX >= 0 && mouseX <= pSnake->window_width &&
-        mouseY >= 0 && mouseY <= pSnake->window_height)
+        mouseY >= 0 && mouseY <= pSnake->window_height) 
     {
         lastAngle = atan2f(dy, dx);
     }
@@ -170,9 +147,9 @@ void updateSnake(Snake *pSnake)
         pSnake->head->x = mouseX;
         pSnake->head->y = mouseY;
     }
-   // pSnake->head->x += moveX;
-    //pSnake->head->y += moveY;
-    // 2. WRAP huvudets position
+    pSnake->head->x += moveX;
+    pSnake->head->y += moveY;
+    //WRAP huvudets position
     if (pSnake->head->x < 0)
         pSnake->head->x += pSnake->window_width;
     else if (pSnake->head->x >= pSnake->window_width)
@@ -200,7 +177,7 @@ void updateSnake(Snake *pSnake)
     }
 }
 
-bool checkCollision(Snake *attacker, Snake *target)
+/*bool checkCollision(Snake *attacker, Snake *target)
 {
     if (!attacker->isAlive || !target->isAlive)
         return false; // Om nån är död, hoppa över
@@ -222,7 +199,7 @@ bool checkCollision(Snake *attacker, Snake *target)
     }
 
     return false;
-}
+}*/
 
 bool isSnakeAlive(Snake *snake)
 {
@@ -233,12 +210,13 @@ void killSnake(Snake *snake)
 {
     snake->isAlive = false;
 }
-void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
+
+GameResult gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground,  int spelarIndex)
 {
     bool isRunning = true;
     SDL_Event event;
 
-    // 🚀 Timer-setup direkt i spelet
+    //Timer-setup direkt i spelet
     Uint64 startTime = SDL_GetTicks64();
     int gameTime = -1;
 
@@ -246,7 +224,8 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
     if (!font)
     {
         printf("Error loading font: %s\n", TTF_GetError());
-        return;
+        return (GameResult){ false, 0.0f };
+
     }
 
     SDL_Color textColor = {255, 255, 255, 255};
@@ -299,11 +278,6 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
             printf("Orm %d är den sista som lever!\n", lastAliveIndex + 1);
             isRunning = false;
         }
-        else if (aliveCount == 0)
-        {
-            printf("Alla ormar är döda!\n");
-            isRunning = false;
-        }
 
         // Uppdatera alla levande ormar
         for (int i = 0; i < 4; i++)
@@ -349,19 +323,23 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
                 drawSnake(snake[i]);
             }
         }
-         // 🚀 Rita timern
+         //Rita timern
          if (pTimerTexture)
          {
              SDL_RenderCopy(pRenderer, pTimerTexture, NULL, &timerRect);
          }
- 
-
         SDL_RenderPresent(pRenderer);
         SDL_Delay(16); // ~60 FPS
     }
-     // 🚀 Städning efter spelet är slut
-     if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
-     TTF_CloseFont(font);
+     // Städning efter spelet är slut
+    if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
+    TTF_CloseFont(font);
+    
+    GameResult result;
+    result.win = isSnakeAlive(snake[spelarIndex]);
+    result.time = (float)gameTime;
+    return result;
+
 }
 
 void drawSnake(Snake *pSnake)
@@ -371,7 +349,7 @@ void drawSnake(Snake *pSnake)
     SDL_Rect rect;
     rect.w = pSnake->headRect.w;
     rect.h = pSnake->headRect.h;
-    while (seg)
+    while (seg) //????
     {
         rect.x = (int)(seg->x - rect.w / 2);
         rect.y = (int)(seg->y - rect.h / 2);
@@ -407,7 +385,7 @@ void destroySnake(Snake *pSnake)
     while (seg)
     {
         Segment *next = seg->next;
-        free(seg);
+        free(seg); 
         seg = next;
     }
     if (pSnake->pTexture)
