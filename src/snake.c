@@ -170,23 +170,198 @@ void updateSnake(Snake *pSnake)
         pSnake->head->x = mouseX;
         pSnake->head->y = mouseY;
     }
-}
-// snake.c
+   // pSnake->head->x += moveX;
+    //pSnake->head->y += moveY;
+    // 2. WRAP huvudets position
+    if (pSnake->head->x < 0)
+        pSnake->head->x += pSnake->window_width;
+    else if (pSnake->head->x >= pSnake->window_width)
+        pSnake->head->x -= pSnake->window_width;
 
-void setSnakePosition(Snake *pSnake, float x, float y)
-{
-    pSnake->head->x = x;
-    pSnake->head->y = y;
+    if (pSnake->head->y < 0)
+        pSnake->head->y += pSnake->window_height;
+    else if (pSnake->head->y >= pSnake->window_height)
+        pSnake->head->y -= pSnake->window_height;
+
+    // 3. Uppdatera segmenten
+    updateSegments(pSnake);
+
+    // 4. Spara huvudets position i historik
+    pSnake->historyX[pSnake->historyIndex] = pSnake->head->x;
+    pSnake->historyY[pSnake->historyIndex] = pSnake->head->y;
+    pSnake->historyIndex = (pSnake->historyIndex + 1) % MAX_HISTORY;
+
+    // 5. Lägg till nytt segment om det är dags
+    Uint32 now = SDL_GetTicks();
+    if (now - pSnake->lastSegmentTime >= 2000)
+    {
+        addSegment(pSnake);
+        pSnake->lastSegmentTime = now;
+    }
 }
 
-float getSnakeX(Snake *pSnake)
+bool checkCollision(Snake *attacker, Snake *target)
 {
-    return pSnake->head->x;
+    if (!attacker->isAlive || !target->isAlive)
+        return false; // Om nån är död, hoppa över
+
+    Segment *current = target->head;
+
+    while (current)
+    {
+        float dx = attacker->head->x - current->x;
+        float dy = attacker->head->y - current->y;
+        float distance = sqrtf(dx * dx + dy * dy);
+
+        if (distance < 10.0f) // Mindre än 10 pixlar => träff
+        {
+            return true;
+        }
+
+        current = current->next;
+    }
+
+    return false;
 }
 
-float getSnakeY(Snake *pSnake)
+bool isSnakeAlive(Snake *snake)
 {
-    return pSnake->head->y;
+    return snake->isAlive;
+}
+
+void killSnake(Snake *snake)
+{
+    snake->isAlive = false;
+}
+void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
+{
+    bool isRunning = true;
+    SDL_Event event;
+
+    // 🚀 Timer-setup direkt i spelet
+    Uint64 startTime = SDL_GetTicks64();
+    int gameTime = -1;
+
+    TTF_Font* font = TTF_OpenFont("GamjaFlower-Regular.ttf", 24);
+    if (!font)
+    {
+        printf("Error loading font: %s\n", TTF_GetError());
+        return;
+    }
+
+    SDL_Color textColor = {255, 255, 255, 255};
+    SDL_Texture* pTimerTexture = NULL;
+    SDL_Rect timerRect;
+
+    while (isRunning)
+    {
+        // Eventhantering
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT ||
+                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE))
+            {
+                isRunning = false;
+            }
+        }
+
+        // Kollisioner
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                if (i == j)
+                    continue;
+
+                if (checkCollision(snake[i], snake[j]))
+                {
+
+                    printf("Orm %d dödade orm %d!\n", i + 1, j + 1);
+                    killSnake(snake[j]);
+                }
+            }
+        }
+
+        // Kolla hur många ormar som lever
+        int aliveCount = 0;
+        int lastAliveIndex = -1;
+        for (int i = 0; i < 4; i++)
+        {
+            if (isSnakeAlive(snake[i]))
+            {
+                aliveCount++;
+                lastAliveIndex = i;
+            }
+        }
+
+        if (aliveCount == 1)
+        {
+            printf("Orm %d är den sista som lever!\n", lastAliveIndex + 1);
+            isRunning = false;
+        }
+        else if (aliveCount == 0)
+        {
+            printf("Alla ormar är döda!\n");
+            isRunning = false;
+        }
+
+        // Uppdatera alla levande ormar
+        for (int i = 0; i < 4; i++)
+        {
+            if (isSnakeAlive(snake[i]))
+            {
+                updateSnake(snake[i]);
+            }
+        }
+        int currentTime = (SDL_GetTicks64() - startTime) / 1000;
+        if (currentTime > gameTime)
+        {
+            gameTime = currentTime;
+
+            if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
+
+            char timerText[32];
+            int minutes = gameTime / 60;
+            int seconds = gameTime % 60;
+            sprintf(timerText, "%02d:%02d", minutes, seconds);
+
+            SDL_Surface* pSurface = TTF_RenderText_Solid(font, timerText, textColor);
+            pTimerTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
+
+            timerRect.x = 10;
+            timerRect.y = 10;
+            timerRect.w = pSurface->w;
+            timerRect.h = pSurface->h;
+
+            SDL_FreeSurface(pSurface);
+        }//
+
+        // Rita allt
+        SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
+        SDL_RenderClear(pRenderer);
+
+        SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (isSnakeAlive(snake[i]))
+            {
+                drawSnake(snake[i]);
+            }
+        }
+         // 🚀 Rita timern
+         if (pTimerTexture)
+         {
+             SDL_RenderCopy(pRenderer, pTimerTexture, NULL, &timerRect);
+         }
+ 
+
+        SDL_RenderPresent(pRenderer);
+        SDL_Delay(16); // ~60 FPS
+    }
+     // 🚀 Städning efter spelet är slut
+     if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
+     TTF_CloseFont(font);
 }
 
 void drawSnake(Snake *pSnake)

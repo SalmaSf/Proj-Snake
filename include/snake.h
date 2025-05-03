@@ -28,5 +28,8 @@ void killSnake(Snake *snake);
 void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground);
 // void sendSnakePosition(int x, int y);
 // void receiveServerUpdate();
+/*int initSnakeClient(void);
+void closeSnakeClient(void);*/
+
 
 #endif
