@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -15,52 +16,7 @@
 #define SERVER_PORT 12345
 
 const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 700;
-
-static UDPsocket udpSocket;
-static IPaddress serverAddr;
-static UDPpacket *packet;
-
-int initSnakeClient()
-{
-    if (SDLNet_Init() < 0)
-    {
-        SDL_Log("SDLNet_Init: %s\n", SDLNet_GetError());
-        return 0;
-    }
-
-    udpSocket = SDLNet_UDP_Open(0);
-    if (!udpSocket)
-    {
-        SDL_Log("SDLNet_UDP_Open: %s\n", SDLNet_GetError());
-        return 0;
-    }
-
-    if (SDLNet_ResolveHost(&serverAddr, SERVER_IP, SERVER_PORT) < 0)
-    {
-        SDL_Log("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
-        return 0;
-    }
-
-    packet = SDLNet_AllocPacket(512);
-    if (!packet)
-    {
-        SDL_Log("SDLNet_AllocPacket: %s\n", SDLNet_GetError());
-        return 0;
-    }
-
-    packet->address.host = serverAddr.host;
-    packet->address.port = serverAddr.port;
-
-    return 1;
-}
-
-void closeSnakeClient()
-{
-    SDLNet_FreePacket(packet);
-    SDLNet_UDP_Close(udpSocket);
-    SDLNet_Quit();
-}
+const int WINDOW_HEIGHT = 600;
 
 int main(int argc, char *argv[])
 {
@@ -177,12 +133,6 @@ int main(int argc, char *argv[])
                 }
             }
         }
-
-        int mouseX, mouseY;
-        SDL_GetMouseState(&mouseX, &mouseY);
-        // sendSnakePosition(mouseX, mouseY);
-        // receiveServerUpdate();
-
         updateSnake(pSnake);
 
         SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);

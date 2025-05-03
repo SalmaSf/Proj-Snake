@@ -2,12 +2,15 @@
 SRCDIR=./src
 INCDIR=./include
 CC=gcc
-INCLUDE = -I$(INCDIR) -I/usr/local/include/SDL2  # eller använd rätt väg beroende på var SDL2 finns
+#//INCLUDE = -I$(INCDIR) -I/usr/local/include/SDL2  # eller använd rätt väg beroende på var SDL2 finns
 CFLAGS = -g $(INCLUDE) -c
-LDFLAGS = -lSDL2 -lSDL2_image -lSDL2_ttf -lm
+INCLUDE = -I/usr/local/include/SDL2 -I./include
+LDFLAGS = -L/usr/local/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lm -lSDL2_mixer
 
-snake: main.o snake.o bakgrund.o
-	$(CC) -o snake main.o snake.o bakgrund.o $(LDFLAGS)
+#LDFLAGS = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lm
+
+snake: main.o snake.o bakgrund.o meny.o
+	$(CC) -o snake main.o snake.o bakgrund.o meny.o $(LDFLAGS)
 
 main.o: $(SRCDIR)/main.c
 	$(CC) $(CFLAGS) $(SRCDIR)/main.c
@@ -18,6 +21,9 @@ snake.o: $(SRCDIR)/snake.c $(INCDIR)/snake.h
 bakgrund.o: $(SRCDIR)/bakgrund.c $(INCDIR)/bakgrund.h
 	$(CC) $(CFLAGS) $(SRCDIR)/bakgrund.c
 
+meny.o: $(SRCDIR)/meny.c $(INCDIR)/meny.h
+	$(CC) $(CFLAGS) $(SRCDIR)/meny.c
+
 clean:
-	rm -f *.o snake
-	rm -f rm -f snake
+	rm -f *.o snake *.exe
+
