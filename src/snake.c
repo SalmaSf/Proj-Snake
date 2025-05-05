@@ -177,10 +177,10 @@ void updateSnake(Snake *pSnake)
     }
 }
 
-/*bool checkCollision(Snake *attacker, Snake *target)
+bool checkCollision(Snake *attacker, Snake *target)
 {
     if (!attacker->isAlive || !target->isAlive)
-        return false; // Om nån är död, hoppa över
+        return false; // Om nån är död, hoppa över 
 
     Segment *current = target->head;
 
@@ -199,7 +199,7 @@ void updateSnake(Snake *pSnake)
     }
 
     return false;
-}*/
+}
 
 bool isSnakeAlive(Snake *snake)
 {

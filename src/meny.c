@@ -228,19 +228,19 @@ bool visaLobby(SDL_Renderer* renderer)
     return true;
 }
 
-int visaResultatskärm(SDL_Renderer* renderer, bool vann, float tid)
+int visaResultatskarm(SDL_Renderer* renderer, bool vann, float tid)
 {
     // 1. Ladda bakgrund
     SDL_Texture* background = IMG_LoadTexture(renderer, "resources/vann.png");
     if (!background)
     {
-        SDL_Log("Kunde inte ladda You_won.png: %s", IMG_GetError());
+        SDL_Log("Kunde inte ladda vann.png: %s", IMG_GetError());
         return 0;
     }
 
     // 2. Ladda font
     TTF_Font* font = TTF_OpenFont("GamjaFlower-Regular.ttf", 40);
-    TTF_SetFontStyle(font, TTF_STYLE_ITALIC);            // Kursiv
+    TTF_SetFontStyle(font, TTF_STYLE_ITALIC);
     if (!font)
     {
         SDL_Log("Kunde inte ladda font: %s", TTF_GetError());
@@ -258,13 +258,12 @@ int visaResultatskärm(SDL_Renderer* renderer, bool vann, float tid)
 
     SDL_Surface* tidSurface = TTF_RenderText_Solid(font, tidText, vit);
     SDL_Texture* tidTex = SDL_CreateTextureFromSurface(renderer, tidSurface);
+    SDL_Rect tidRect = {325, 330, tidSurface->w, tidSurface->h};
     SDL_FreeSurface(tidSurface);
-    SDL_Rect tidRect = {320, 290, tidSurface->w, tidSurface->h}; // Skala upp 20%
 
-    // 4. Definiera klickbar knapp
-    SDL_Rect quitKnapp = {275, 420, 250, 60}; // justera efter din bild
-    SDL_Rect visuellKnapp = quitKnapp;
-    bool isPressed = false;
+    // 4. Definiera klickbara områden (matchar bilden)
+    SDL_Rect playAgainKnapp = {225, 440, 250, 60};
+    SDL_Rect quitKnapp      = {225, 520, 250, 60};
 
     // 5. Event-loop
     SDL_Event event;
@@ -283,42 +282,32 @@ int visaResultatskärm(SDL_Renderer* renderer, bool vann, float tid)
                 int mx = event.button.x;
                 int my = event.button.y;
 
+                // Klick på QUIT
                 if (mx >= quitKnapp.x && mx <= quitKnapp.x + quitKnapp.w &&
                     my >= quitKnapp.y && my <= quitKnapp.y + quitKnapp.h)
                 {
-                    isPressed = true;
-                    visuellKnapp.y += 4;
-                }
-            }
-
-            // Musen släpps
-            if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT)
-            {
-                int mx = event.button.x;
-                int my = event.button.y;
-
-                if (isPressed &&
-                    mx >= quitKnapp.x && mx <= quitKnapp.x + quitKnapp.w &&
-                    my >= quitKnapp.y && my <= quitKnapp.y + quitKnapp.h)
-                {
-                    // Klickade på knappen
                     SDL_DestroyTexture(background);
                     SDL_DestroyTexture(tidTex);
                     TTF_CloseFont(font);
-                    return 0;
+                    return 0; // QUIT
                 }
 
-                isPressed = false;
-                visuellKnapp = quitKnapp;
+                // Klick på PLAY AGAIN
+                if (mx >= playAgainKnapp.x && mx <= playAgainKnapp.x + playAgainKnapp.w &&
+                    my >= playAgainKnapp.y && my <= playAgainKnapp.y + playAgainKnapp.h)
+                {
+                    SDL_DestroyTexture(background);
+                    SDL_DestroyTexture(tidTex);
+                    TTF_CloseFont(font);
+                    return 1; // PLAY AGAIN
+                }
             }
 
             // Tangentbordsalternativ
             if (event.type == SDL_KEYDOWN)
             {
                 if (event.key.keysym.sym == SDLK_q || event.key.keysym.sym == SDLK_ESCAPE)
-                {
                     running = false;
-                }
             }
         }
 
@@ -338,7 +327,7 @@ int visaResultatskärm(SDL_Renderer* renderer, bool vann, float tid)
     return 0;
 }
 
-void keepWatching(Snake* snake[], SDL_Renderer* renderer, SDL_Texture* background)
+/*void keepWatching(Snake* snake[], SDL_Renderer* renderer, SDL_Texture* background)
 {
     SDL_Event event;
     bool running = true;
@@ -377,4 +366,4 @@ void keepWatching(Snake* snake[], SDL_Renderer* renderer, SDL_Texture* backgroun
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
-}
+}*/

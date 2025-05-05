@@ -91,14 +91,6 @@ int main(int argc, char *argv[])
         SDL_Quit();
         return 1;
     }
-    if (!visaIPMeny(pRenderer))
-    {
-        SDL_DestroyRenderer(pRenderer);
-        SDL_DestroyWindow(pWindow);
-        IMG_Quit();
-        SDL_Quit();
-        return 1;
-    }
 
     if (!visaIPMeny(pRenderer))
     {
@@ -142,27 +134,15 @@ int main(int argc, char *argv[])
 
     int spelarIndex = 0; // ← byt till 1, 2, 3 beroende på vilken klient du testar just nu
     GameResult result = gameLoop(snake, pRenderer, pBackground,spelarIndex); 
-    int val = visaResultatskärm(pRenderer, result.win, result.time);
+    int val = visaResultatskarm(pRenderer, result.win, result.time);
     if (val == 0) {
-        for (int i = 0; i < 4; i++) {
-            destroySnake(snake[i]);
-        }
-        SDL_DestroyRenderer(pRenderer);
-        SDL_DestroyWindow(pWindow);
-        SDL_DestroyTexture(pBackground);
-        Mix_FreeMusic(music);
-        Mix_CloseAudio();
-        IMG_Quit();
-        SDL_Quit();
+        visaStartMeny(pRenderer); 
         return 0;
     }
-    else if (val == 1) {
-        keepWatching(snake, pRenderer, pBackground); 
+    else{
+        visaIPMeny(pRenderer);
     }
-    else if (val == 2) {
-        main(argc, argv);
-        return 0;
-    }
+    
     bool isRunning = true;
     SDL_Event event;
 
