@@ -231,7 +231,7 @@ bool visaLobby(SDL_Renderer* renderer)
 int visaResultatskärm(SDL_Renderer* renderer, bool vann, float tid)
 {
     // 1. Ladda bakgrund
-    SDL_Texture* background = IMG_LoadTexture(renderer, "resources/You_win.png");
+    SDL_Texture* background = IMG_LoadTexture(renderer, "resources/vann.png");
     if (!background)
     {
         SDL_Log("Kunde inte ladda You_won.png: %s", IMG_GetError());
