@@ -1,16 +1,16 @@
+
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
+
+#include <SDL_net.h>
 #include <math.h>
 #include <stdlib.h>
 #include "snake.h"
 #include <stdbool.h>
-#include <SDL_ttf.h> 
 
-
-/*float historyX[MAX_HISTORY];
-float historyY[MAX_HISTORY];
-int historyIndex = 0;*/
-
+#include "snake_data.h"
+#define MAX_PLAYERS 4
 struct segment
 {
     float x, y;
@@ -34,11 +34,16 @@ struct snake
     int historyIndex;
     Uint32 lastSegmentTime;
     bool isAlive;
+    int colorId; // NEW
+    int playerIndex;
+    int segmentCount;
+    SDL_Rect segments[MAX_SEGMENTS];
+    int direction;
 };
 
 // Uint32 lastSegmentTime = 0;
 
-Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height, const char *headTexturePath, const char *segmentTexturePath)
+Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height, const char *headTexturePath, const char *segmentTexturePath, int colorId)
 {
     Snake *pSnake = malloc(sizeof(Snake));
     pSnake->head = malloc(sizeof(Segment));
@@ -51,6 +56,7 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
     pSnake->historyIndex = 0;
 
     pSnake->isAlive = true;
+    pSnake->colorId = colorId; // orm färg salma
 
     /*SDL_Surface *pSurface = IMG_Load("resources/snake_head.png");
     if (!pSurface)
@@ -95,8 +101,8 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
     pSnake->pSegmentTexture = SDL_CreateTextureFromSurface(pRenderer, pSegmentSurface);
     SDL_FreeSurface(pSegmentSurface);
 
-    pSnake->window_width = window_width;
-    pSnake->window_height = window_height;
+    /*pSnake->window_width = window_width; // varför finns denna del två gånger i koden?
+    pSnake->window_height = window_height;*/
 
     return pSnake;
 }
@@ -136,7 +142,6 @@ void updateSegments(Snake *pSnake)
     }
 }
 
-
 void updateSnake(Snake *pSnake)
 {
     int mouseX, mouseY;
@@ -170,8 +175,8 @@ void updateSnake(Snake *pSnake)
         pSnake->head->x = mouseX;
         pSnake->head->y = mouseY;
     }
-   // pSnake->head->x += moveX;
-    //pSnake->head->y += moveY;
+    // pSnake->head->x += moveX;
+    // pSnake->head->y += moveY;
     // 2. WRAP huvudets position
     if (pSnake->head->x < 0)
         pSnake->head->x += pSnake->window_width;
@@ -233,7 +238,7 @@ void killSnake(Snake *snake)
 {
     snake->isAlive = false;
 }
-void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
+void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground, int localPlayerIndex)
 {
     bool isRunning = true;
     SDL_Event event;
@@ -242,7 +247,7 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
     Uint64 startTime = SDL_GetTicks64();
     int gameTime = -1;
 
-    TTF_Font* font = TTF_OpenFont("GamjaFlower-Regular.ttf", 24);
+    TTF_Font *font = TTF_OpenFont("GamjaFlower-Regular.ttf", 24);
     if (!font)
     {
         printf("Error loading font: %s\n", TTF_GetError());
@@ -250,7 +255,7 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
     }
 
     SDL_Color textColor = {255, 255, 255, 255};
-    SDL_Texture* pTimerTexture = NULL;
+    SDL_Texture *pTimerTexture = NULL;
     SDL_Rect timerRect;
 
     while (isRunning)
@@ -266,9 +271,9 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
         }
 
         // Kollisioner
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            for (int j = 0; j < 4; j++)
+            for (int j = 0; j < MAX_PLAYERS; j++)
             {
                 if (i == j)
                     continue;
@@ -305,27 +310,32 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
             isRunning = false;
         }
 
-        // Uppdatera alla levande ormar
+        // Uppdatera alla levande ormar -ändringar för att istället uppdatera en orm istället för alla -salma
         for (int i = 0; i < 4; i++)
         {
             if (isSnakeAlive(snake[i]))
             {
-                updateSnake(snake[i]);
+                if (i == localPlayerIndex)
+                { // 👈 Update only local player's snake
+                    updateSnake(snake[i]);
+                }
             }
         }
+
         int currentTime = (SDL_GetTicks64() - startTime) / 1000;
         if (currentTime > gameTime)
         {
             gameTime = currentTime;
 
-            if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
+            if (pTimerTexture)
+                SDL_DestroyTexture(pTimerTexture);
 
             char timerText[32];
             int minutes = gameTime / 60;
             int seconds = gameTime % 60;
             sprintf(timerText, "%02d:%02d", minutes, seconds);
 
-            SDL_Surface* pSurface = TTF_RenderText_Solid(font, timerText, textColor);
+            SDL_Surface *pSurface = TTF_RenderText_Solid(font, timerText, textColor);
             pTimerTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
 
             timerRect.x = 10;
@@ -334,7 +344,7 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
             timerRect.h = pSurface->h;
 
             SDL_FreeSurface(pSurface);
-        }//
+        } //
 
         // Rita allt
         SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
@@ -342,26 +352,26 @@ void gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground)
 
         SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < MAX_PLAYERS; i++)
         {
             if (isSnakeAlive(snake[i]))
             {
                 drawSnake(snake[i]);
             }
         }
-         // 🚀 Rita timern
-         if (pTimerTexture)
-         {
-             SDL_RenderCopy(pRenderer, pTimerTexture, NULL, &timerRect);
-         }
- 
+        // 🚀 Rita timern
+        if (pTimerTexture)
+        {
+            SDL_RenderCopy(pRenderer, pTimerTexture, NULL, &timerRect);
+        }
 
         SDL_RenderPresent(pRenderer);
         SDL_Delay(16); // ~60 FPS
     }
-     // 🚀 Städning efter spelet är slut
-     if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
-     TTF_CloseFont(font);
+    // 🚀 Städning efter spelet är slut
+    if (pTimerTexture)
+        SDL_DestroyTexture(pTimerTexture);
+    TTF_CloseFont(font);
 }
 
 void drawSnake(Snake *pSnake)
@@ -383,13 +393,10 @@ void drawSnake(Snake *pSnake)
     pSnake->headRect.x = (int)(pSnake->head->x - pSnake->headRect.w / 2);
     pSnake->headRect.y = (int)(pSnake->head->y - pSnake->headRect.h / 2);
 
-
     // Rotera runt huvudets position (övre mittpunkt)
     SDL_Point center = {
         pSnake->headRect.w / 2,
-        pSnake->headRect.h / 2
-    };
-    
+        pSnake->headRect.h / 2};
 
     SDL_RenderCopyEx(
         pSnake->pRenderer,
@@ -399,6 +406,131 @@ void drawSnake(Snake *pSnake)
         pSnake->headRectAngle + 90,
         &center,
         SDL_FLIP_NONE);
+}
+
+void snakeToSerializable(Snake *pSnake, SerializableSnake *out) // salma
+{
+    Segment *seg = pSnake->head;
+    int count = 0;
+
+    while (seg && count < MAX_SEGMENTS)
+    {
+        out->segments[count].x = (int)seg->x;
+        out->segments[count].y = (int)seg->y;
+        count++;
+        seg = seg->next;
+    }
+
+    out->segmentCount = count;
+    out->direction = (int)pSnake->headRectAngle;
+    out->colorId = pSnake->colorId;
+}
+
+void serializableToSnake(SerializableSnake *in, Snake *pSnake) // salma
+{
+    // Free old segment list only
+    Segment *seg = pSnake->head;
+    while (seg)
+    {
+        Segment *next = seg->next; // ska du kalla på draesnake härinne också?
+        free(seg);
+        seg = next;
+    }
+
+    Segment *head = malloc(sizeof(Segment));
+    head->x = (float)in->segments[0].x;
+    head->y = (float)in->segments[0].y;
+    head->next = NULL;
+
+    Segment *current = head;
+    for (int i = 1; i < in->segmentCount; i++)
+    {
+        Segment *newSeg = malloc(sizeof(Segment));
+        newSeg->x = (float)in->segments[i].x;
+        newSeg->y = (float)in->segments[i].y;
+        newSeg->next = NULL;
+        current->next = newSeg;
+        current = newSeg;
+    }
+
+    pSnake->head = head;
+    pSnake->segmentCount = in->segmentCount;
+    pSnake->direction = in->direction;
+    pSnake->playerIndex = in->playerIndex;
+    pSnake->colorId = in->colorId; // salma
+    pSnake->historyIndex = 0;
+    pSnake->lastSegmentTime = SDL_GetTicks();
+}
+
+void updateLocalSnakeAndSend(Snake *snakes[], int localPlayerIndex, UDPsocket udpSocket, UDPpacket *sendPacket, IPaddress serverAddress)
+{
+    if (localPlayerIndex == -1 || !snakes[localPlayerIndex])
+        return;
+
+    updateSnake(snakes[localPlayerIndex]); // Update movement, etc.
+
+    ClientData clientData;
+    snakeToSerializable(snakes[localPlayerIndex], &clientData); // Fill the struct properly
+
+    clientData.playerIndex = localPlayerIndex; // Optional: server may use this
+    clientData.isYou = 1;                      // Let server know this is your own snake
+
+    // DEBUG: Print the data being sent to the server
+    printf("Client sending Snake %d: head at (%d, %d), segments: %d, direction: %d, colorId: %d\n",
+           clientData.playerIndex,
+           clientData.segments[0].x,
+           clientData.segments[0].y,
+           clientData.segmentCount,
+           clientData.direction,
+           clientData.colorId);
+
+    memcpy(sendPacket->data, &clientData, sizeof(ClientData));
+    sendPacket->len = sizeof(ClientData);
+    sendPacket->address = serverAddress;
+
+    SDLNet_UDP_Send(udpSocket, -1, sendPacket);
+}
+void updateOrCreateSnakeFromSerializable(
+    Snake *snakes[],
+    SerializableSnake *ss,
+    SDL_Renderer *pRenderer,
+    int window_width,
+    int window_height)
+{
+    const char *head = "resources/default_head.png";
+    const char *body = "resources/default_segment.png";
+
+    switch (ss->colorId)
+    {
+    case 0:
+        head = "resources/purple_head.png";
+        body = "resources/purple_body.png";
+        break;
+    case 1:
+        head = "resources/yellow_head.png";
+        body = "resources/yellow_body.png";
+        break;
+    case 2:
+        head = "resources/green_head.png";
+        body = "resources/green_body.png";
+        break;
+    case 3:
+        head = "resources/pink_head.png";
+        body = "resources/pink_body.png";
+        break;
+    }
+
+    int index = ss->playerIndex;
+
+    if (!snakes[index])
+    {
+        snakes[index] = createSnake(0, 0, pRenderer, window_width, window_height, head, body, ss->colorId);
+    }
+
+    // Actually update the snake's segment data
+    serializableToSnake(ss, snakes[index]);
+   // printf("Updating snake %d, segments: %d\n", in->playerIndex, in->segmentCount);
+
 }
 
 void destroySnake(Snake *pSnake)
