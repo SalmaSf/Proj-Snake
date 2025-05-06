@@ -1,34 +1,34 @@
-# Paths
+# Kataloger
+SRCDIR=.
 INCDIR=../include
-SRCDIR=../src
-RESOURCEDIR=../resources
-
-# Compiler and flags
+SRCOTH=../src
 CC=gcc
-INCLUDE=-I$(INCDIR) -IC:/msys64/mingw64/include/SDL2
-CFLAGS=-g $(INCLUDE) -c
-LDFLAGS=-LC:/msys64/mingw64/lib -lSDL2 -lSDL2_image -lSDL2_net -lSDL2_ttf -lm
 
-# Output target
-TARGET=snakeServer.exe
+# Inkluderingsflaggor
+INCLUDE = -IC:/msys64/mingw64/include/SDL2 -I$(INCDIR)
+CFLAGS = -g -Dmain=SDL_main $(INCLUDE) -c
 
-# Object files
-OBJS=main.o snake.o bakgrund.o
+# Länkningsflaggor
+LDFLAGS = -LC:/msys64/mingw64/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_net -lSDL2_ttf -lSDL2_mixer -mwindows -mconsole -lm
 
-# Build target
+# Mål
+TARGET = main.exe
+OBJS = main.o snake.o bakgrund.o
+
+# Regler
+all: $(TARGET)
+
 $(TARGET): $(OBJS)
-	$(CC) -mconsole -o $(TARGET) $(OBJS) $(LDFLAGS)
+	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
-# Compile object files
-main.o: main.c $(INCDIR)/snake.h $(INCDIR)/bakgrund.h $(INCDIR)/snake_data.h
-	$(CC) $(CFLAGS) -o main.o main.c
+main.o: $(SRCDIR)/main.c
+	$(CC) $(CFLAGS) $(SRCDIR)/main.c -o $@
 
-snake.o: $(SRCDIR)/snake.c $(INCDIR)/snake.h
-	$(CC) $(CFLAGS) -o snake.o $(SRCDIR)/snake.c
+snake.o: $(SRCOTH)/snake.c $(INCDIR)/snake.h
+	$(CC) $(CFLAGS) $(SRCOTH)/snake.c -o $@
 
-bakgrund.o: $(SRCDIR)/bakgrund.c $(INCDIR)/bakgrund.h
-	$(CC) $(CFLAGS) -o bakgrund.o $(SRCDIR)/bakgrund.c
+bakgrund.o: $(SRCOTH)/bakgrund.c $(INCDIR)/bakgrund.h
+	$(CC) $(CFLAGS) $(SRCOTH)/bakgrund.c -o $@
 
-# Clean build files
 clean:
-	del *.o *.exe
+	del /Q *.o *.exe

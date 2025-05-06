@@ -2,92 +2,183 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <SDL.h>
+#include <SDL_image.h>
 #include <SDL_net.h>
+#include "snake.h"
+#include "bakgrund.h"
 #include "snake_data.h"
 
-#define SERVER_PORT 2000
-#define MAX_CLIENTS 4
-#define PACKET_SIZE 512
+#define PORT 2000
+#define BUFFER_SIZE 512
+#define MAX_PLAYERS 4
 
 typedef struct {
-    IPaddress addr;
-    int id;
+    IPaddress address;
+    int index;
     bool active;
 } Client;
 
+typedef struct {
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    SDL_Texture *background;
+    UDPsocket socket;
+    UDPpacket *packet;
+    Client clients[MAX_PLAYERS];
+    Snake *snakes[MAX_PLAYERS];
+    int numClients;
+    int windowWidth;
+    int windowHeight;
+    bool running;
+} Game;
+
+int getClientIndex(Game *game, IPaddress addr);
+void sendGameData(Game *game);
+void handlePacket(Game *game);
+
 int main(int argc, char *argv[]) {
-    if (SDLNet_Init() < 0) {
-        fprintf(stderr, "SDLNet_Init: %s\n", SDLNet_GetError());
+    Game game = {0};
+    game.windowWidth = 800;
+    game.windowHeight = 700;
+    game.running = true;
+
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
+        printf("SDL_Init Error: %s\n", SDL_GetError());
         return 1;
     }
 
-    UDPsocket socket = SDLNet_UDP_Open(SERVER_PORT);
-    if (!socket) {
-        fprintf(stderr, "SDLNet_UDP_Open: %s\n", SDLNet_GetError());
-        SDLNet_Quit();
+    if (IMG_Init(IMG_INIT_PNG) == 0) {
+        printf("IMG_Init Error: %s\n", IMG_GetError());
         return 1;
     }
 
-    UDPpacket *recvPacket = SDLNet_AllocPacket(PACKET_SIZE);
-    UDPpacket *sendPacket = SDLNet_AllocPacket(PACKET_SIZE);
-    if (!recvPacket || !sendPacket) {
-        fprintf(stderr, "SDLNet_AllocPacket error\n");
-        SDLNet_Quit();
+    if (SDLNet_Init() != 0) {
+        printf("SDLNet_Init Error: %s\n", SDLNet_GetError());
         return 1;
     }
 
-    Client clients[MAX_CLIENTS] = {0};
-    int numClients = 0;
+    game.window = SDL_CreateWindow("Snake Server", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                   game.windowWidth, game.windowHeight, 0);
+    game.renderer = SDL_CreateRenderer(game.window, -1, SDL_RENDERER_ACCELERATED);
+    game.background = loadBackground(game.renderer, "resources/bakgrund.png");
 
-    printf("Server running on port %d...\n", SERVER_PORT);
+    game.socket = SDLNet_UDP_Open(PORT);
+    if (!game.socket) {
+        printf("SDLNet_UDP_Open Error: %s\n", SDLNet_GetError());
+        return 1;
+    }
 
-    while (1) {
-        while (SDLNet_UDP_Recv(socket, recvPacket)) {
-            int found = 0;
-            int clientIndex = -1;
+    game.packet = SDLNet_AllocPacket(BUFFER_SIZE);
+    if (!game.packet) {
+        printf("SDLNet_AllocPacket Error: %s\n", SDLNet_GetError());
+        return 1;
+    }
 
-            // Check if this client already exists
-            for (int i = 0; i < numClients; i++) {
-                if (clients[i].active &&
-                    clients[i].addr.host == recvPacket->address.host &&
-                    clients[i].addr.port == recvPacket->address.port) {
-                    found = 1;
-                    clientIndex = clients[i].id;
-                    break;
-                }
-            }
+    SDL_Event event;
+    while (game.running) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT)
+                game.running = false;
+        }
 
-            // New client
-            if (!found && numClients < MAX_CLIENTS) {
-                clientIndex = numClients;
-                clients[numClients].addr = recvPacket->address;
-                clients[numClients].id = clientIndex;
-                clients[numClients].active = true;
-                numClients++;
+        if (SDLNet_UDP_Recv(game.socket, game.packet)) {
+            handlePacket(&game);
+        }
 
-                printf("New client connected with ID %d\n", clientIndex);
-            }
+        SDL_SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
+        SDL_RenderClear(game.renderer);
+        SDL_RenderCopy(game.renderer, game.background, NULL, NULL);
 
-            // Prepare and send response
-            if (clientIndex != -1) {
-                ClientData data;
-                data.clientID = clientIndex;
-                data.x = 100 + (clientIndex * 100);  // Example start X
-                data.y = 100;                         // Fixed Y for simplicity
-                data.isAlive = true;
-
-                memcpy(sendPacket->data, &data, sizeof(ClientData));
-                sendPacket->len = sizeof(ClientData);
-                sendPacket->address = recvPacket->address;
-                SDLNet_UDP_Send(socket, -1, sendPacket);
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (game.clients[i].active && game.snakes[i]) {
+                drawSnake(game.snakes[i]);
             }
         }
-        SDL_Delay(10);
+
+        SDL_RenderPresent(game.renderer);
+        sendGameData(&game);
+        SDL_Delay(16); // ~60 FPS
     }
 
-    SDLNet_FreePacket(recvPacket);
-    SDLNet_FreePacket(sendPacket);
-    SDLNet_UDP_Close(socket);
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (game.snakes[i]) {
+            destroySnake(game.snakes[i]);
+        }
+    }
+    SDL_DestroyRenderer(game.renderer);
+    SDL_DestroyWindow(game.window);
+    SDL_DestroyTexture(game.background);
+    SDLNet_FreePacket(game.packet);
+    SDLNet_UDP_Close(game.socket);
     SDLNet_Quit();
+    IMG_Quit();
+    SDL_Quit();
+
     return 0;
+}
+
+int getClientIndex(Game *game, IPaddress addr) {
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (game->clients[i].active &&
+            addr.host == game->clients[i].address.host &&
+            addr.port == game->clients[i].address.port) {
+            return game->clients[i].index;
+        }
+    }
+
+    if (game->numClients < MAX_PLAYERS) {
+        int index = game->numClients;
+        game->clients[index].address = addr;
+        game->clients[index].index = index;
+        game->clients[index].active = true;
+        game->snakes[index] = createSnake(
+            game->windowWidth / 2,
+            game->windowHeight / 2,
+            game->renderer,
+            game->windowWidth,
+            game->windowHeight,
+            "resources/purple_head.png",
+            "resources/purple_body.png");
+        game->numClients++;
+        printf("New client added at index %d\n", index);
+        return index;
+    }
+
+    return -1;
+}
+
+void handlePacket(Game *game) {
+    ClientData clientData;
+    memcpy(&clientData, game->packet->data, sizeof(ClientData));
+
+    int clientIndex = getClientIndex(game, game->packet->address);
+    if (clientIndex == -1) {
+        printf("Too many clients connected. Ignoring packet.\n");
+        return;
+    }
+
+    setSnakePosition(game->snakes[clientIndex], clientData.x, clientData.y);
+    printf("Received from client %d: x=%d y=%d\n", clientIndex, clientData.x, clientData.y);
+}
+
+void sendGameData(Game *game) {
+    ServerData serverData;
+    serverData.numSnakes = game->numClients;
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (game->clients[i].active && game->snakes[i]) {
+            serverData.snakes[i].x = getSnakeHeadX(game->snakes[i]);
+            serverData.snakes[i].y = getSnakeHeadY(game->snakes[i]);
+        }
+    }
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (game->clients[i].active) {
+            memcpy(game->packet->data, &serverData, sizeof(ServerData));
+            game->packet->len = sizeof(ServerData);
+            game->packet->address = game->clients[i].address;
+            SDLNet_UDP_Send(game->socket, -1, game->packet);
+        }
+    }
 }
