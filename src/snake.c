@@ -200,6 +200,14 @@ bool checkCollision(Snake *attacker, Snake *target)
 
     return false;
 }
+int getSnakeHeadX(Snake *snake) {
+    return (int)(snake->head->x);
+}
+
+int getSnakeHeadY(Snake *snake) {
+    return (int)(snake->head->y);
+}
+
 
 bool isSnakeAlive(Snake *snake)
 {
@@ -209,137 +217,6 @@ bool isSnakeAlive(Snake *snake)
 void killSnake(Snake *snake)
 {
     snake->isAlive = false;
-}
-
-GameResult gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackground,  int spelarIndex)
-{
-    bool isRunning = true;
-    SDL_Event event;
-
-    //Timer-setup direkt i spelet
-    Uint64 startTime = SDL_GetTicks64();
-    int gameTime = -1;
-
-    TTF_Font* font = TTF_OpenFont("GamjaFlower-Regular.ttf", 24);
-    if (!font)
-    {
-        printf("Error loading font: %s\n", TTF_GetError());
-        return (GameResult){ false, 0.0f };
-
-    }
-
-    SDL_Color textColor = {255, 255, 255, 255};
-    SDL_Texture* pTimerTexture = NULL;
-    SDL_Rect timerRect;
-
-    while (isRunning)
-    {
-        // Eventhantering
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT ||
-                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE))
-            {
-                isRunning = false;
-            }
-        }
-
-        // Kollisioner
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                if (i == j)
-                    continue;
-
-                if (checkCollision(snake[i], snake[j]))
-                {
-
-                    printf("Orm %d dödade orm %d!\n", i + 1, j + 1);
-                    killSnake(snake[j]);
-                }
-            }
-        }
-
-        // Kolla hur många ormar som lever
-        int aliveCount = 0;
-        int lastAliveIndex = -1;
-        for (int i = 0; i < 4; i++)
-        {
-            if (isSnakeAlive(snake[i]))
-            {
-                aliveCount++;
-                lastAliveIndex = i;
-            }
-        }
-
-        if (aliveCount == 1)
-        {
-            printf("Orm %d är den sista som lever!\n", lastAliveIndex + 1);
-            isRunning = false;
-        }
-
-        // Uppdatera alla levande ormar
-        for (int i = 0; i < 4; i++)
-        {
-            if (isSnakeAlive(snake[i]))
-            {
-                updateSnake(snake[i]);
-            }
-        }
-        int currentTime = (SDL_GetTicks64() - startTime) / 1000;
-        if (currentTime > gameTime)
-        {
-            gameTime = currentTime;
-
-            if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
-
-            char timerText[32];
-            int minutes = gameTime / 60;
-            int seconds = gameTime % 60;
-            sprintf(timerText, "%02d:%02d", minutes, seconds);
-
-            SDL_Surface* pSurface = TTF_RenderText_Solid(font, timerText, textColor);
-            pTimerTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
-
-            timerRect.x = 10;
-            timerRect.y = 10;
-            timerRect.w = pSurface->w;
-            timerRect.h = pSurface->h;
-
-            SDL_FreeSurface(pSurface);
-        }//
-
-        // Rita allt
-        SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
-        SDL_RenderClear(pRenderer);
-
-        SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
-
-        for (int i = 0; i < 4; i++)
-        {
-            if (isSnakeAlive(snake[i]))
-            {
-                drawSnake(snake[i]);
-            }
-        }
-         //Rita timern
-         if (pTimerTexture)
-         {
-             SDL_RenderCopy(pRenderer, pTimerTexture, NULL, &timerRect);
-         }
-        SDL_RenderPresent(pRenderer);
-        SDL_Delay(16); // ~60 FPS
-    }
-     // Städning efter spelet är slut
-    if (pTimerTexture) SDL_DestroyTexture(pTimerTexture);
-    TTF_CloseFont(font);
-    
-    GameResult result;
-    result.win = isSnakeAlive(snake[spelarIndex]);
-    result.time = (float)gameTime;
-    return result;
-
 }
 
 void drawSnake(Snake *pSnake)
