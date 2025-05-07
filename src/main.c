@@ -10,7 +10,7 @@
 #include "bakgrund.h"
 #include "meny.h"
 
-#define SERVER_IP "130.229.136.58"
+#define SERVER_IP "130.229.179.210"
 #define SERVER_PORT 2000
 #define MAX_SNAKES 4
 
@@ -146,6 +146,7 @@ GameResult gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackg
             int headY = getSnakeHeadY(snake[spelarIndex]);
 
             sendSnakePosition(pGame, headX, headY);
+            receiveServerUpdate(pGame); 
         }
         // Eventhantering
         while (SDL_PollEvent(&event))
@@ -249,6 +250,7 @@ GameResult gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackg
     if (pTimerTexture)
         SDL_DestroyTexture(pTimerTexture);
     TTF_CloseFont(font);
+    closeSnakeClient(pGame);
 
     GameResult result;
     result.win = isSnakeAlive(snake[spelarIndex]);

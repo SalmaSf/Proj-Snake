@@ -1,0 +1,35 @@
+# Paths
+INCDIR=../include
+SRCDIR=../src
+RESOURCEDIR=../resources
+
+# Compiler and flags
+CC=gcc
+INCLUDE=-I$(INCDIR) -I/usr/local/include/SDL2
+CFLAGS=-g $(INCLUDE) -c
+LDFLAGS=-L/usr/local/lib -lSDL2 -lSDL2_image -lSDL2_net -lSDL2_ttf -lm
+
+# Output target
+TARGET=snakeServer
+
+# Object files
+OBJS=main.o snake.o bakgrund.o
+
+# Build target
+$(TARGET): $(OBJS)
+	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS)
+
+# Compile object files
+main.o: main.c $(INCDIR)/snake.h $(INCDIR)/bakgrund.h 
+	$(CC) $(CFLAGS) -o main.o main.c
+
+snake.o: $(SRCDIR)/snake.c $(INCDIR)/snake.h
+	$(CC) $(CFLAGS) -o snake.o $(SRCDIR)/snake.c
+
+bakgrund.o: $(SRCDIR)/bakgrund.c $(INCDIR)/bakgrund.h
+	$(CC) $(CFLAGS) -o bakgrund.o $(SRCDIR)/bakgrund.c
+
+# Clean build files
+clean:
+	rm -f *.o $(TARGET)
+
