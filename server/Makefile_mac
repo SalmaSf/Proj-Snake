@@ -5,9 +5,9 @@ RESOURCEDIR=../resources
 
 # Compiler and flags
 CC=gcc
-INCLUDE=-I$(INCDIR) -I/usr/local/include/SDL2
-CFLAGS=-g $(INCLUDE) -c
-LDFLAGS=-L/usr/local/lib -lSDL2 -lSDL2_image -lSDL2_net -lSDL2_ttf -lm
+INCLUDE = -I/opt/homebrew/include/SDL2 -I$(INCDIR)
+CFLAGS = -g $(INCLUDE) -arch arm64 -c  # Lägg till -arch arm64 här
+LDFLAGS = -L/opt/homebrew/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lSDL2_mixer -lm -arch arm64
 
 # Output target
 TARGET=snakeServer
@@ -32,4 +32,3 @@ bakgrund.o: $(SRCDIR)/bakgrund.c $(INCDIR)/bakgrund.h
 # Clean build files
 clean:
 	rm -f *.o $(TARGET)
-
