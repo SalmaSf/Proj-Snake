@@ -27,7 +27,8 @@ int getSnakeHeadY(Snake *snake);
 bool checkCollision(Snake *attacker, Snake *target);
 bool isSnakeAlive(Snake *snake);
 void killSnake(Snake *snake);
-//void sendSnakePosition(int x, int y);
+void setSnakePosition(Snake *snake, int x, int y);
+
 //void receiveServerUpdate();
 
 #endif

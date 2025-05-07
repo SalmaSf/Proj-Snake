@@ -219,6 +219,13 @@ void killSnake(Snake *snake)
     snake->isAlive = false;
 }
 
+void setSnakePosition(Snake *snake, int x, int y) {
+    if (snake && snake->head) {
+        snake->head->x = x;
+        snake->head->y = y;
+    }
+}
+
 void drawSnake(Snake *pSnake)
 {
     // Rita segment

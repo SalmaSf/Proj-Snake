@@ -9,17 +9,14 @@
 #include "snake.h"
 #include "bakgrund.h"
 #include "meny.h"
+#include "snake_data.h"
 
-#define SERVER_IP "130.229.179.210"
+#define SERVER_IP "130.229.136.58"
 #define SERVER_PORT 2000
 #define MAX_SNAKES 4
 
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 700;
-
-// static UDPsocket udpSocket;
-// static IPaddress serverAddr;
-// static UDPpacket *packet;
 
 enum gameState
 {
@@ -50,9 +47,6 @@ typedef struct
     TTF_Font *font;
 
     GameState state;
-
-    // int startTime;
-    // int gameTime;
 
     // Nätverk
     UDPsocket udpSocket;
@@ -96,6 +90,8 @@ int initGame(Game *pGame)
     pGame->music = Mix_LoadMUS("resources/bakgrund.wav");
     pGame->collisionSound = Mix_LoadWAV("resources/snake_rattle.wav");
 
+
+    //gör om till switch mes case0, case1,... för att sen när server get index till clienten så väljer en orm beroende på det
     pGame->snakes[0] = createSnake(400, 0, pGame->pRenderer, 800, 700, "resources/purple_head.png", "resources/purple_body.png");
     pGame->snakes[1] = createSnake(400, 700, pGame->pRenderer, 800, 700, "resources/yellow_head.png", "resources/yellow_body.png");
     pGame->snakes[2] = createSnake(0, 350, pGame->pRenderer, 800, 700, "resources/green_head.png", "resources/green_body.png");

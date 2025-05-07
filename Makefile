@@ -4,7 +4,7 @@ INCDIR=./include
 CC=gcc
 INCLUDE = -IC:/msys64/mingw64/include/SDL2 -I$(INCDIR) 
 CFLAGS = -g $(INCLUDE) -c
-LDFLAGS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_net -lSDL2_ttf -lSDL2_mixer -mwindows -lm
+LDFLAGS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_net -lSDL2_ttf -lSDL2_mixer -mwindows -mconsole -lm
 
 snake: main.o snake.o bakgrund.o meny.o
 	$(CC) -o snake main.o snake.o bakgrund.o meny.o $(LDFLAGS)
