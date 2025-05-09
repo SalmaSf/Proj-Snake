@@ -4,75 +4,150 @@
 #include <math.h>
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_mixer.h>
 #include <stdbool.h>
 #include "meny.h"
 
-
-bool visaStartMeny(SDL_Renderer* renderer)
+bool visaStartMeny(SDL_Renderer* renderer, bool* ljudPa)
 {
-    SDL_Texture* bakgrund = IMG_LoadTexture(renderer, "resources/meny_bakgrund.png");
-    SDL_Texture* startKnapp = IMG_LoadTexture(renderer, "resources/start_knapp.png");
+    SDL_Texture* bakgrund     = IMG_LoadTexture(renderer, "resources/meny_bakgrund.png");
+    SDL_Texture* startKnapp   = IMG_LoadTexture(renderer, "resources/start_knapp.png");
+    SDL_Texture* soundOnIcon  = IMG_LoadTexture(renderer, "resources/on.png");
+    SDL_Texture* soundOffIcon = IMG_LoadTexture(renderer, "resources/off.png");
+    SDL_Texture* closeIcon    = IMG_LoadTexture(renderer, "resources/close.png");
 
-    if (!bakgrund || !startKnapp) {
+    if (!bakgrund || !startKnapp || !soundOnIcon || !soundOffIcon || !closeIcon) {
         SDL_Log("Kunde inte ladda menybilder: %s", IMG_GetError());
-        if (bakgrund) SDL_DestroyTexture(bakgrund); 
-        if (startKnapp) SDL_DestroyTexture(startKnapp);
+        if (bakgrund)     SDL_DestroyTexture(bakgrund);
+        if (startKnapp)   SDL_DestroyTexture(startKnapp);
+        if (soundOnIcon)  SDL_DestroyTexture(soundOnIcon);
+        if (soundOffIcon) SDL_DestroyTexture(soundOffIcon);
+        if (closeIcon)    SDL_DestroyTexture(closeIcon);
         return false;
     }
 
-    SDL_Rect knappRect = { 260, 390, 280, 140 }; 
-    SDL_Rect knappVisuellRect = knappRect;     
-    bool isPressed = false;
-    bool iMeny = true;
-    SDL_Event event;
+    SDL_Rect knappRect        = { 260, 390, 280, 140 };
+    SDL_Rect knappVisuellRect = knappRect;
+    SDL_Rect soundRect        = { 650, 20, 60, 60 };
+    SDL_Rect soundVisuellRect = soundRect;
+    SDL_Rect closeRect        = { 20, 20, 60, 60 };
+    SDL_Rect closeVisuellRect = closeRect;
 
-    while (iMeny)
+    bool isPressed     = false;
+    bool soundPressed  = false;
+    bool closePressed  = false;
+
+    SDL_Event event;
+    bool running = true;
+
+    while (running)
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) {
-                // Endast avsluta hela programmet om användaren stänger fönstret!
-                SDL_DestroyTexture(bakgrund);
-                SDL_DestroyTexture(startKnapp);
-                return false;
-            }
+            if (event.type == SDL_QUIT)
+                running = false;
 
-            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
-                int mx = event.button.x;
-                int my = event.button.y; 
-
-                if (mx >= knappRect.x && mx <= knappRect.x + knappRect.w &&
-                    my >= knappRect.y && my <= knappRect.y + knappRect.h) {
-                    isPressed = true;
-                    knappVisuellRect.y += 4; // tryck-effekt
-                }
-            }
-
-            if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
+            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+            {
                 int mx = event.button.x;
                 int my = event.button.y;
 
-                if (isPressed &&
-                    mx >= knappRect.x && mx <= knappRect.x + knappRect.w &&
-                    my >= knappRect.y && my <= knappRect.y + knappRect.h) {
-                    iMeny = false; // släppte musen på knappen → fortsätt till IP-meny
+                // Start-knapp
+                if (mx >= knappRect.x && mx <= knappRect.x + knappRect.w &&
+                    my >= knappRect.y && my <= knappRect.y + knappRect.h)
+                {
+                    isPressed = true;
+                    knappVisuellRect.y += 4;
                 }
 
+                // Ljud-knapp
+                if (mx >= soundRect.x && mx <= soundRect.x + soundRect.w &&
+                    my >= soundRect.y && my <= soundRect.y + soundRect.h)
+                {
+                    soundPressed = true;
+                    soundVisuellRect.y += 4;
+                }
+
+                // Close-knapp
+                if (mx >= closeRect.x && mx <= closeRect.x + closeRect.w &&
+                    my >= closeRect.y && my <= closeRect.y + closeRect.h)
+                {
+                    closePressed = true;
+                    closeVisuellRect.y += 4;
+                }
+            }
+
+            if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT)
+            {
+                int mx = event.button.x;
+                int my = event.button.y;
+
+                // Start
+                if (isPressed &&
+                    mx >= knappRect.x && mx <= knappRect.x + knappRect.w &&
+                    my >= knappRect.y && my <= knappRect.y + knappRect.h)
+                {
+                    SDL_DestroyTexture(bakgrund);
+                    SDL_DestroyTexture(startKnapp);
+                    SDL_DestroyTexture(soundOnIcon);
+                    SDL_DestroyTexture(soundOffIcon);
+                    SDL_DestroyTexture(closeIcon);
+                    return true;
+                }
+
+                // Ljud
+                if (soundPressed &&
+                    mx >= soundRect.x && mx <= soundRect.x + soundRect.w &&
+                    my >= soundRect.y && my <= soundRect.y + soundRect.h)
+                {
+                    *ljudPa = !(*ljudPa);
+                    Mix_VolumeMusic(*ljudPa ? MIX_MAX_VOLUME : 0);
+                }
+
+                // Close
+                if (closePressed &&
+                    mx >= closeRect.x && mx <= closeRect.x + closeRect.w &&
+                    my >= closeRect.y && my <= closeRect.y + closeRect.h)
+                {
+                    SDL_DestroyTexture(bakgrund);
+                    SDL_DestroyTexture(startKnapp);
+                    SDL_DestroyTexture(soundOnIcon);
+                    SDL_DestroyTexture(soundOffIcon);
+                    SDL_DestroyTexture(closeIcon);
+                    return false;
+                }
+
+                // Återställ visuellt
                 isPressed = false;
+                soundPressed = false;
+                closePressed = false;
                 knappVisuellRect = knappRect;
+                soundVisuellRect = soundRect;
+                closeVisuellRect = closeRect;
             }
         }
 
+        // Rendering
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, bakgrund, NULL, NULL);
         SDL_RenderCopy(renderer, startKnapp, NULL, &knappVisuellRect);
+
+        if (*ljudPa)
+            SDL_RenderCopy(renderer, soundOnIcon, NULL, &soundVisuellRect);
+        else
+            SDL_RenderCopy(renderer, soundOffIcon, NULL, &soundVisuellRect);
+
+        SDL_RenderCopy(renderer, closeIcon, NULL, &closeVisuellRect);
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
 
     SDL_DestroyTexture(bakgrund);
     SDL_DestroyTexture(startKnapp);
-    return true;  // Viktigt: returnera true så att vi går vidare till IP-meny
+    SDL_DestroyTexture(soundOnIcon);
+    SDL_DestroyTexture(soundOffIcon);
+    SDL_DestroyTexture(closeIcon);
+    return false;
 }
 
 bool visaIPMeny(SDL_Renderer* renderer)
@@ -232,11 +307,13 @@ int visaResultatskarm(SDL_Renderer* renderer, bool vann, float tid)
 {
     // 1. Ladda bakgrund
     SDL_Texture* background = IMG_LoadTexture(renderer, "resources/vann.png");
+    //const char* bildFil = vann ? "resources/vann.png" : "resources/lose.png"; //kanske funkar med servern??
+    //SDL_Texture* background = IMG_LoadTexture(renderer, bildFil);
     if (!background)
     {
         SDL_Log("Kunde inte ladda vann.png: %s", IMG_GetError());
         return 0;
-    }
+    } 
 
     // 2. Ladda font
     TTF_Font* font = TTF_OpenFont("GamjaFlower-Regular.ttf", 40);
@@ -327,43 +404,3 @@ int visaResultatskarm(SDL_Renderer* renderer, bool vann, float tid)
     return 0;
 }
 
-/*void keepWatching(Snake* snake[], SDL_Renderer* renderer, SDL_Texture* background)
-{
-    SDL_Event event;
-    bool running = true;
-
-    while (running)
-    {
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT)
-                running = false;
-            if (event.type == SDL_KEYDOWN)
-            {
-                if (event.key.keysym.sym == SDLK_q || event.key.keysym.sym == SDLK_ESCAPE)
-                    running = false;
-            }
-        }
-
-        // Uppdatera levande ormar
-        for (int i = 0; i < 4; i++)
-        {
-            if (isSnakeAlive(snake[i]))
-                updateSnake(snake[i]);
-        }
-
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
-
-        SDL_RenderCopy(renderer, background, NULL, NULL);
-
-        for (int i = 0; i < 4; i++)
-        {
-            if (isSnakeAlive(snake[i]))
-                drawSnake(snake[i]);
-        }
-
-        SDL_RenderPresent(renderer);
-        SDL_Delay(16);
-    }
-}*/

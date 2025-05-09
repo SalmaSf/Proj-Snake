@@ -103,7 +103,7 @@ void updateSegments(Snake *pSnake)
 
     while (current)
     {
-        int delay = segmentIndex * 5;
+        int delay = segmentIndex * 3;
         int index = (pSnake->historyIndex - delay + MAX_HISTORY) % MAX_HISTORY;
         current->x = pSnake->historyX[index];
         current->y = pSnake->historyY[index];

@@ -7,7 +7,7 @@
 #include "snake.h"  
 
 
-bool visaStartMeny(SDL_Renderer* renderer);
+bool visaStartMeny(SDL_Renderer* renderer, bool* ljudPa);
 bool visaIPMeny(SDL_Renderer* renderer);
 bool visaLobby(SDL_Renderer* renderer);
 int visaResultatskarm(SDL_Renderer* renderer, bool vann, float tid);
