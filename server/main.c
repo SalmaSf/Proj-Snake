@@ -274,22 +274,23 @@ void sendGameData(Game *game)
     ServerData serverData;
     serverData.numSnakes = game->numClients;
 
-    for (int i = 0; i < MAX_PLAYERS; i++)
-    {
-        if (game->clients[i].active && game->snakes[i])
-        {
-            serverData.snakes[i].x = getSnakeHeadX(game->snakes[i]);
-            serverData.snakes[i].y = getSnakeHeadY(game->snakes[i]);
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (game->clients[i].active && game->snakes[i]) {
+            serverData.x[i] = getSnakeHeadX(game->snakes[i]);
+            serverData.y[i] = getSnakeHeadY(game->snakes[i]);
+            serverData.isAlive[i] = isSnakeAlive(game->snakes[i]);
+            serverData.clientID[i] = game->clients[i].index;
         }
     }
 
-    for (int i = 0; i < MAX_PLAYERS; i++)
-    {
-        if (game->clients[i].active)
-        {
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (game->clients[i].active) {
+            serverData.myClientID = game->clients[i].index; // Set the ID for *this* client
+            printf("Sending to client %d: myClientID = %d\n", i, serverData.myClientID);
             memcpy(game->packet->data, &serverData, sizeof(ServerData));
             game->packet->len = sizeof(ServerData);
             game->packet->address = game->clients[i].address;
+
             SDLNet_UDP_Send(game->socket, -1, game->packet);
         }
     }

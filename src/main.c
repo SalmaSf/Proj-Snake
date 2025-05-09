@@ -40,6 +40,7 @@ typedef struct
 
     Snake *snakes[MAX_SNAKES];
     int playerIndex;
+    bool playerIndexSet;
 
     Mix_Music *music;
     Mix_Chunk *collisionSound;
@@ -245,7 +246,7 @@ GameResult gameLoop(Snake *snake[], SDL_Renderer *pRenderer, SDL_Texture *pBackg
     if (pTimerTexture)
         SDL_DestroyTexture(pTimerTexture);
     TTF_CloseFont(font);
-    closeSnakeClient(pGame);
+    // closeSnakeClient(pGame);
 
     GameResult result;
     result.win = isSnakeAlive(snake[spelarIndex]);
@@ -348,12 +349,29 @@ void receiveServerUpdate(Game *pGame)
 {
     if (SDLNet_UDP_Recv(pGame->udpSocket, pGame->packet))
     {
-        struct
+        ServerData serverData;
+        memcpy(&serverData, pGame->packet->data, sizeof(ServerData));
+        if (!pGame->playerIndexSet)
         {
-            int x, y;
-        } serverData;
-        memcpy(&serverData, pGame->packet->data, sizeof(serverData));
-        printf("Received from server: x=%d y=%d\n", serverData.x, serverData.y);
+            pGame->playerIndex = serverData.myClientID;
+            pGame->playerIndexSet = true;
+            printf("Received client ID from server: %d\n", pGame->playerIndex);
+        }
+
+        // Gå igenom alla ormar som servern har skickat
+        for (int i = 0; i < serverData.numSnakes; i++)
+        {
+            setSnakePosition(pGame->snakes[i], serverData.x[i], serverData.y[i]);
+
+            if (!serverData.isAlive[i])
+            {
+                killSnake(pGame->snakes[i]);
+            }
+
+            // Debug: skriv ut varje orm
+            printf("ServerData Snake %d: x=%d, y=%d, isAlive=%d, clientID=%d\n",
+                   i, serverData.x[i], serverData.y[i], serverData.isAlive[i], serverData.clientID[i]);
+        }
     }
 }
 
