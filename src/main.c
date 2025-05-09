@@ -275,7 +275,12 @@ void cleanGame(Game *pGame)
 {
     for (int i = 0; i < MAX_SNAKES; i++)
     {
-        destroySnake(pGame->snakes[i]);
+        // destroySnake(pGame->snakes[i]);
+        if (pGame->snakes[i] != NULL)
+        {
+            destroySnake(pGame->snakes[i]);
+            pGame->snakes[i] = NULL; // viktigt!
+        }
     }
 
     SDL_DestroyTexture(pGame->pBackground);
