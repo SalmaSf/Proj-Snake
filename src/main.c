@@ -41,6 +41,7 @@ typedef struct
     Snake *snakes[MAX_SNAKES];
     int playerIndex;
     bool playerIndexSet;
+    bool ljudPa;
 
     Mix_Music *music;
     Mix_Chunk *collisionSound;
@@ -71,9 +72,10 @@ int main(int argc, char *argv[])
 {
     Game game;
 
-    if (!initGame(&game))
+    if (!initGame(&game)){
         return 1;
-
+    }
+    game.ljudPa = true;
     runGame(&game);
     cleanGame(&game);
 
@@ -241,36 +243,40 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
 
 void runGame(Game *pGame)
 {
-    bool ljudPa = true;
+    bool programRunning = true;
+    while (programRunning)
+    {
+        // STARTMENY – användaren kan välja att avsluta här
+        if (!visaStartMeny(pGame->pRenderer,&pGame->ljudPa))
+            break;
 
-    if (!visaStartMeny(pGame->pRenderer, &ljudPa))
-        return;
+        bool playAgain = true;
+        while (playAgain)
+        {
+            // Hoppa direkt till IP-meny → lobby → spel
+            if (!visaIPMeny(pGame->pRenderer)) break;
+            if (!visaLobby(pGame->pRenderer)) break;
 
-    if (!visaIPMeny(pGame->pRenderer))
-        return;
+            for (int i = 0; i < 4; i++) {
+                if (pGame->snakes[i]) {
+                    destroySnake(pGame->snakes[i]);
+                }
+            }
+            pGame->snakes[0] = createSnake(WINDOW_WIDTH / 2, 0, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");
+            pGame->snakes[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/yellow_head.png", "resources/yellow_body.png");
+            pGame->snakes[2] = createSnake(0, WINDOW_HEIGHT / 2, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/green_head.png", "resources/green_body.png");
+            pGame->snakes[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");
+            
+            GameResult result = gameLoop(pGame->snakes,pGame->pRenderer,pGame->pBackground,pGame->playerIndex,pGame); 
+            int val = visaResultatskarm(pGame->pRenderer, result.win, result.time);
+            if (val == 0) //0 ska vara quit
+            {
+                playAgain = false;
+            }
 
-    if (!visaLobby(pGame->pRenderer))
-        return;
-
-    GameResult result = gameLoop(
-        pGame->snakes,
-        pGame->pRenderer,
-        pGame->pBackground,
-        pGame->playerIndex,
-        pGame
-    );
-
-    int val = visaResultatskarm(pGame->pRenderer, result.win, result.time);
-
-    if (val == 0) {
-        // Tillbaka till startmeny
-        runGame(pGame);
-    } else {
-        // Spela igen
-        runGame(pGame);
+        }
     }
 }
-
 
 void cleanGame(Game *pGame)
 {
