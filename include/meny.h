@@ -12,6 +12,8 @@ bool visaIPMeny(SDL_Renderer* renderer);
 bool visaLobby(SDL_Renderer* renderer);
 int visaResultatskarm(SDL_Renderer* renderer, bool vann, float tid);
 void keepWatching(Snake* snake[], SDL_Renderer* renderer, SDL_Texture* background);
+void visaInstruktionsskarm(SDL_Renderer* renderer);
+
 
 
 #endif

@@ -15,6 +15,8 @@ bool visaStartMeny(SDL_Renderer* renderer, bool* ljudPa)
     SDL_Texture* soundOnIcon  = IMG_LoadTexture(renderer, "resources/on.png");
     SDL_Texture* soundOffIcon = IMG_LoadTexture(renderer, "resources/off.png");
     SDL_Texture* closeIcon    = IMG_LoadTexture(renderer, "resources/close.png");
+    SDL_Texture* howToPlayButton = IMG_LoadTexture(renderer, "resources/HTP.png");
+
 
     if (!bakgrund || !startKnapp || !soundOnIcon || !soundOffIcon || !closeIcon) {
         SDL_Log("Kunde inte ladda menybilder: %s", IMG_GetError());
@@ -32,10 +34,15 @@ bool visaStartMeny(SDL_Renderer* renderer, bool* ljudPa)
     SDL_Rect soundVisuellRect = soundRect;
     SDL_Rect closeRect        = { 20, 20, 60, 60 };
     SDL_Rect closeVisuellRect = closeRect;
+    SDL_Rect howToPlayRect = { 260, 550, 280, 140 };  // 
+    SDL_Rect howToPlayVisuellRect = howToPlayRect;
+
 
     bool isPressed     = false;
     bool soundPressed  = false;
     bool closePressed  = false;
+    bool howToPlayPressed = false;
+
 
     SDL_Event event;
     bool running = true;
@@ -75,6 +82,15 @@ bool visaStartMeny(SDL_Renderer* renderer, bool* ljudPa)
                     closePressed = true;
                     closeVisuellRect.y += 4;
                 }
+                // How to Play-knapp
+                if (mx >= howToPlayRect.x && mx <= howToPlayRect.x + howToPlayRect.w &&
+                    my >= howToPlayRect.y && my <= howToPlayRect.y + howToPlayRect.h)
+                {
+                    howToPlayPressed = true;
+                    howToPlayVisuellRect.y += 4; // Tryck-effekt
+                }
+                
+
             }
 
             if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT)
@@ -116,14 +132,25 @@ bool visaStartMeny(SDL_Renderer* renderer, bool* ljudPa)
                     SDL_DestroyTexture(closeIcon);
                     return false;
                 }
+                if (howToPlayPressed &&
+                    mx >= howToPlayRect.x && mx <= howToPlayRect.x + howToPlayRect.w &&
+                    my >= howToPlayRect.y && my <= howToPlayRect.y + howToPlayRect.h)
+                {
+                    visaInstruktionsskarm(renderer);
+                }
+                
+            
+                
 
                 // Återställ visuellt
                 isPressed = false;
                 soundPressed = false;
                 closePressed = false;
+                howToPlayPressed = false;
                 knappVisuellRect = knappRect;
                 soundVisuellRect = soundRect;
                 closeVisuellRect = closeRect;
+                howToPlayVisuellRect = howToPlayRect;
             }
         }
 
@@ -138,6 +165,8 @@ bool visaStartMeny(SDL_Renderer* renderer, bool* ljudPa)
             SDL_RenderCopy(renderer, soundOffIcon, NULL, &soundVisuellRect);
 
         SDL_RenderCopy(renderer, closeIcon, NULL, &closeVisuellRect);
+        SDL_RenderCopy(renderer, howToPlayButton, NULL, &howToPlayVisuellRect);
+
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
@@ -147,6 +176,7 @@ bool visaStartMeny(SDL_Renderer* renderer, bool* ljudPa)
     SDL_DestroyTexture(soundOnIcon);
     SDL_DestroyTexture(soundOffIcon);
     SDL_DestroyTexture(closeIcon);
+    SDL_DestroyTexture(howToPlayButton);
     return false;
 }
 
@@ -316,7 +346,7 @@ int visaResultatskarm(SDL_Renderer* renderer, bool vann, float tid)
     } 
 
     // 2. Ladda font
-    TTF_Font* font = TTF_OpenFont("GamjaFlower-Regular.ttf", 40);
+    TTF_Font* font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 40);
     TTF_SetFontStyle(font, TTF_STYLE_ITALIC);
     if (!font)
     {
@@ -403,4 +433,72 @@ int visaResultatskarm(SDL_Renderer* renderer, bool vann, float tid)
 
     return 0;
 }
+void visaInstruktionsskarm(SDL_Renderer* renderer)
+{
+    SDL_Texture* instrBild = IMG_LoadTexture(renderer, "resources/HTPS.png");
+    SDL_Texture* closeIcon = IMG_LoadTexture(renderer, "resources/close.png");
 
+    if (!instrBild || !closeIcon) {
+        SDL_Log("Kunde inte ladda instruktionsbild eller stängknapp");
+        if (instrBild) SDL_DestroyTexture(instrBild);
+        if (closeIcon) SDL_DestroyTexture(closeIcon);
+        return;
+    }
+
+    SDL_Rect closeRect        = { 20, 20, 60, 60 };
+    SDL_Rect closeVisualRect  = closeRect;
+    bool closePressed         = false;
+
+    bool isRunning = true;
+    SDL_Event event;
+
+    while (isRunning)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            int mx = event.button.x;
+            int my = event.button.y;
+
+            if (event.type == SDL_QUIT)
+                isRunning = false;
+
+            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+            {
+                if (mx >= closeRect.x && mx <= closeRect.x + closeRect.w &&
+                    my >= closeRect.y && my <= closeRect.y + closeRect.h)
+                {
+                    closePressed = true;
+                    closeVisualRect.y += 4; // Visuell feedback
+                }
+            }
+
+            if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT)
+            {
+                if (closePressed &&
+                    mx >= closeRect.x && mx <= closeRect.x + closeRect.w &&
+                    my >= closeRect.y && my <= closeRect.y + closeRect.h)
+                {
+                    isRunning = false;
+                }
+
+                closePressed = false;
+                closeVisualRect = closeRect; // Återställ visuell position
+            }
+
+            if (event.type == SDL_KEYDOWN &&
+                event.key.keysym.sym == SDLK_ESCAPE)
+            {
+                isRunning = false;
+            }
+        }
+
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, instrBild, NULL, NULL);
+        SDL_RenderCopy(renderer, closeIcon, NULL, &closeVisualRect);
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16);
+    }
+
+    SDL_DestroyTexture(instrBild);
+    SDL_DestroyTexture(closeIcon);
+}

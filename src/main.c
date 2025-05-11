@@ -63,6 +63,9 @@ int initSnakeClient(Game *pGame);
 void sendSnakePosition(Game *pGame, int x, int y);
 void receiveServerUpdate(Game *pGame);
 void closeSnakeClient(Game *pGame);
+GameResult gameLoop(Snake *snakes[], SDL_Renderer *pRenderer, SDL_Texture *pBackground, int playerIndex, Game *pGame);
+
+
 
 int main(int argc, char *argv[])
 {
@@ -70,6 +73,7 @@ int main(int argc, char *argv[])
 
     if (!initGame(&game))
         return 1;
+
     runGame(&game);
     cleanGame(&game);
 
@@ -78,297 +82,195 @@ int main(int argc, char *argv[])
 
 int initGame(Game *pGame)
 {
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-    TTF_Init();
-    
-    bool ljudPa = true; 
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+        SDL_Log("SDL_Init failed: %s", SDL_GetError());
+        return 0;
+    }
 
-    pGame->pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 700, 0);
+    if (TTF_Init() < 0) {
+        SDL_Log("TTF_Init failed: %s", TTF_GetError());
+        return 0;
+    }
+
+    pGame->pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+    if (!pGame->pWindow) return 0;
+
     pGame->pRenderer = SDL_CreateRenderer(pGame->pWindow, -1, SDL_RENDERER_ACCELERATED);
+    if (!pGame->pRenderer) return 0;
+
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        SDL_Log("Mix_OpenAudio failed: %s", Mix_GetError());
+        return 0;
+    }
+
+    pGame->music = Mix_LoadMUS("resources/bakgrund.wav");
+    if (!pGame->music) return 0;
+    Mix_PlayMusic(pGame->music, -1);
+
+    pGame->collisionSound = Mix_LoadWAV("resources/snake_rattle.wav");
+    if (!pGame->collisionSound) return 0;
 
     pGame->pBackground = loadBackground(pGame->pRenderer, "resources/bakgrund.png");
-    pGame->music = Mix_LoadMUS("resources/bakgrund.wav");
-    pGame->collisionSound = Mix_LoadWAV("resources/snake_rattle.wav");
+    if (!pGame->pBackground) return 0;
 
-    // gör om till switch mes case0, case1,... för att sen när server get index till clienten så väljer en orm beroende på det
-    pGame->snakes[0] = createSnake(400, 0, pGame->pRenderer, 800, 700, "resources/purple_head.png", "resources/purple_body.png");
-    pGame->snakes[1] = createSnake(400, 700, pGame->pRenderer, 800, 700, "resources/yellow_head.png", "resources/yellow_body.png");
-    pGame->snakes[2] = createSnake(0, 350, pGame->pRenderer, 800, 700, "resources/green_head.png", "resources/green_body.png");
-    pGame->snakes[3] = createSnake(800, 350, pGame->pRenderer, 800, 700, "resources/pink_head.png", "resources/pink_body.png");
+    // Snake-resurser skapas här, men används i gameLoop
+    pGame->snakes[0] = createSnake(WINDOW_WIDTH / 2, 0, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");
+    pGame->snakes[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/yellow_head.png", "resources/yellow_body.png");
+    pGame->snakes[2] = createSnake(0, WINDOW_HEIGHT / 2, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/green_head.png", "resources/green_body.png");
+    pGame->snakes[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");
 
-    pGame->playerIndex = 0; // ← ändra beroende på klient
-
-    Mix_PlayMusic(pGame->music, -1);
+    pGame->playerIndex = 0;
+    pGame->playerIndexSet = false;
     pGame->state = START;
 
-    if (!initSnakeClient(pGame))
-    {
-        printf("SDL_image kunde inte initieras! SDL_image Error: %s\n", IMG_GetError());
-        return 1;
+    if (!initSnakeClient(pGame)) {
+        SDL_Log("Nätverksfel vid initiering.");
+        return 0;
     }
 
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
-    {
-        SDL_Log("SDL_mixer init error: %s", Mix_GetError());
-        return 1;
-    }
+    return 1;
+}
 
-    Mix_Music *music = Mix_LoadMUS("resources/bakgrund.wav");
-    if (!music)
-    {
-        SDL_Log("Failed to load music: %s", Mix_GetError());
-        return 1;
-    }
-
-    Mix_PlayMusic(music, -1); // -1 = loopa musiken
-    Mix_VolumeMusic(ljudPa ? MIX_MAX_VOLUME : 0);
-
-
-    SDL_Window *pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
-    SDL_Renderer *pRenderer = SDL_CreateRenderer(pWindow, -1, SDL_RENDERER_ACCELERATED);
-
-    if (!initSnakeClient())
-    {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Network Error", "Failed to initialize network connection.", pWindow);
-        SDL_DestroyRenderer(pRenderer);
-        SDL_DestroyWindow(pWindow);
-        IMG_Quit();
-        SDLNet_Quit();
-        SDL_Quit();
-        return 1;
-    }
-
-    SDL_Init(SDL_INIT_AUDIO);
-    // Initiera SDL_mixer
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
-    {
-        SDL_Log("SDL_mixer init error: %s", Mix_GetError());
-        return 1;
-    }
-
-    // Ladda och spela bakgrundsmusik
-    if (!music)
-    {
-        SDL_Log("Failed to load music: %s", Mix_GetError());
-        return 1;
-    }
-    Mix_PlayMusic(music, -1); // -1 = loopa musiken
-
-    SDL_Texture *pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
-    if (!pBackground)
-        return 1;
-
-    const char *headTexturePath = "resources/default_head.png";
-    const char *segmentTexturePath = "resources/default_segment.png";
-
-    Snake *pSnake = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, headTexturePath, segmentTexturePath);
-    Snake *snake[4];
-
-    Mix_Chunk *collisionSound = Mix_LoadWAV("resources/snake_rattle.wav");
-    if (!collisionSound)
-    {
-        SDL_Log("Failed to load collision sound: %s", Mix_GetError());
-        return 1;
-    }
-    
-    int spelarIndex = 0;
-    bool programRunning = true;
-
-    while (programRunning)
-    {
-        // STARTMENY – användaren kan välja att avsluta här
-        if (!visaStartMeny(pRenderer, &ljudPa))
-            break;
-
-        bool spelaOmgang = true;
-
-        while (spelaOmgang)
-        {
-            // Hoppa direkt till IP-meny → lobby → spel
-            if (!visaIPMeny(pRenderer)) break;
-            if (!visaLobby(pRenderer)) break;
-
-            SDL_Texture *pBackground = loadBackground(pRenderer, "resources/bakgrund.png");
-            if (!pBackground) break;
-
-            snake[0] = createSnake(WINDOW_WIDTH / 2, 0, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");
-            snake[1] = createSnake(WINDOW_WIDTH / 2, WINDOW_HEIGHT, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/yellow_head.png", "resources/yellow_body.png");
-            snake[2] = createSnake(0, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/green_head.png", "resources/green_body.png");
-            snake[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");
-
-            GameResult result = gameLoop(snake, pRenderer, pBackground, spelarIndex);
-
-            for (int i = 0; i < 4; i++)
-                destroySnake(snake[i]);
-            SDL_DestroyTexture(pBackground);
-
-            int val = visaResultatskarm(pRenderer, result.win, result.time);
-
-            if (val == 0)
-            {
-                // Quit → tillbaka till startmeny
-                spelaOmgang = false;
-            }
-            // else → Play Again → kör om inre loopen direkt
-        }
-    }
-    
+GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *background, int playerIndex, Game *pGame)
+{
     bool isRunning = true;
     SDL_Event event;
-
-    // Timer-setup direkt i spelet
     Uint64 startTime = SDL_GetTicks64();
     int gameTime = -1;
 
-    TTF_Font *font = TTF_OpenFont("GamjaFlower-Regular.ttf", 24);
-    if (!font)
-    {
+    // Font & timer-setup
+    TTF_Font *font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 24);
+    if (!font) {
         printf("Error loading font: %s\n", TTF_GetError());
-        return (GameResult){false, 0.0f};
+        return (GameResult){ false, 0.0f };
     }
 
     SDL_Color textColor = {255, 255, 255, 255};
-    SDL_Texture *pTimerTexture = NULL;
+    SDL_Texture *timerTexture = NULL;
     SDL_Rect timerRect;
 
     while (isRunning)
     {
-
-        if (isSnakeAlive(snake[spelarIndex]))
-        {
-            int headX = getSnakeHeadX(snake[spelarIndex]);
-            int headY = getSnakeHeadY(snake[spelarIndex]);
-
-            sendSnakePosition(pGame, headX, headY);
+        // Skicka/ta emot nätverksdata
+        if (isSnakeAlive(snakes[playerIndex])) {
+            int x = getSnakeHeadX(snakes[playerIndex]);
+            int y = getSnakeHeadY(snakes[playerIndex]);
+            sendSnakePosition(pGame, x, y);
             receiveServerUpdate(pGame);
         }
-        // Eventhantering
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT ||
-                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE))
-            {
+
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT || 
+               (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE))
                 isRunning = false;
-            }
         }
 
         // Kollisioner
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                if (i == j)
-                    continue;
-
-                if (checkCollision(snake[i], snake[j]))
-                {
-
-                    printf("Orm %d dödade orm %d!\n", i + 1, j + 1);
-                    killSnake(snake[j]);
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (i != j && checkCollision(snakes[i], snakes[j])) {
+                    killSnake(snakes[j]);
                 }
             }
         }
 
-        // Kolla hur många ormar som lever
-        int aliveCount = 0;
-        int lastAliveIndex = -1;
-        for (int i = 0; i < 4; i++)
-        {
-            if (isSnakeAlive(snake[i]))
-            {
-                aliveCount++;
-                lastAliveIndex = i;
+        // Räkna levande ormar
+        int alive = 0, lastAlive = -1;
+        for (int i = 0; i < 4; i++) {
+            if (isSnakeAlive(snakes[i])) {
+                alive++;
+                lastAlive = i;
             }
         }
-
-        if (aliveCount == 1)
-        {
-            printf("Orm %d är den sista som lever!\n", lastAliveIndex + 1);
+        if (alive <= 1) {
             isRunning = false;
         }
 
-        // Uppdatera alla levande ormar
-        for (int i = 0; i < 4; i++)
-        {
-            if (isSnakeAlive(snake[i]))
-            {
-                updateSnake(snake[i]);
+        // Uppdatera ormar
+        for (int i = 0; i < 4; i++) {
+            if (isSnakeAlive(snakes[i])) {
+                updateSnake(snakes[i]);
             }
         }
+
+        // Timer
         int currentTime = (SDL_GetTicks64() - startTime) / 1000;
-        if (currentTime > gameTime)
-        {
+        if (currentTime > gameTime) {
             gameTime = currentTime;
 
-            if (pTimerTexture)
-                SDL_DestroyTexture(pTimerTexture);
+            if (timerTexture) SDL_DestroyTexture(timerTexture);
 
-            char timerText[32];
-            int minutes = gameTime / 60;
-            int seconds = gameTime % 60;
-            sprintf(timerText, "%02d:%02d", minutes, seconds);
-
-            SDL_Surface *pSurface = TTF_RenderText_Solid(font, timerText, textColor);
-            pTimerTexture = SDL_CreateTextureFromSurface(pRenderer, pSurface);
-
+            char text[32];
+            sprintf(text, "%02d:%02d", gameTime / 60, gameTime % 60);
+            SDL_Surface *surface = TTF_RenderText_Solid(font, text, textColor);
+            timerTexture = SDL_CreateTextureFromSurface(renderer, surface);
             timerRect.x = 10;
             timerRect.y = 10;
-            timerRect.w = pSurface->w;
-            timerRect.h = pSurface->h;
+            timerRect.w = surface->w;
+            timerRect.h = surface->h;
+            SDL_FreeSurface(surface);
+        }
 
-            SDL_FreeSurface(pSurface);
-        } //
+        // Render
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, background, NULL, NULL);
 
-        // Rita allt
-        SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
-        SDL_RenderClear(pRenderer);
-
-        SDL_RenderCopy(pRenderer, pBackground, NULL, NULL);
-
-        for (int i = 0; i < 4; i++)
-        {
-            if (isSnakeAlive(snake[i]))
-            {
-                drawSnake(snake[i]);
+        for (int i = 0; i < 4; i++) {
+            if (isSnakeAlive(snakes[i])) {
+                drawSnake(snakes[i]);
             }
         }
-        // Rita timern
-        if (pTimerTexture)
-        {
-            SDL_RenderCopy(pRenderer, pTimerTexture, NULL, &timerRect);
-        }
-        SDL_RenderPresent(pRenderer);
-        SDL_Delay(16); // ~60 FPS
-    }
-    // Städning efter spelet är slut
-    if (pTimerTexture)
-        SDL_DestroyTexture(pTimerTexture);
-    TTF_CloseFont(font);
-    // closeSnakeClient(pGame);
 
-    GameResult result;
-    result.win = isSnakeAlive(snake[spelarIndex]);
-    result.time = (float)gameTime;
-    return result;
+        if (timerTexture) {
+            SDL_RenderCopy(renderer, timerTexture, NULL, &timerRect);
+        }
+
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16);
+    }
+
+    if (timerTexture) SDL_DestroyTexture(timerTexture);
+    TTF_CloseFont(font);
+
+    return (GameResult){
+        .win = isSnakeAlive(snakes[playerIndex]),
+        .time = (float)gameTime
+    };
 }
 
 void runGame(Game *pGame)
 {
-    if (!visaStartMeny(pGame->pRenderer))
+    bool ljudPa = true;
+
+    if (!visaStartMeny(pGame->pRenderer, &ljudPa))
         return;
+
     if (!visaIPMeny(pGame->pRenderer))
         return;
+
     if (!visaLobby(pGame->pRenderer))
         return;
 
-    GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame->playerIndex, pGame);
+    GameResult result = gameLoop(
+        pGame->snakes,
+        pGame->pRenderer,
+        pGame->pBackground,
+        pGame->playerIndex,
+        pGame
+    );
+
     int val = visaResultatskarm(pGame->pRenderer, result.win, result.time);
 
-    if (val == 0)
-        visaStartMeny(pGame->pRenderer);
-    else
-        visaIPMeny(pGame->pRenderer);
+    if (val == 0) {
+        // Tillbaka till startmeny
+        runGame(pGame);
+    } else {
+        // Spela igen
+        runGame(pGame);
+    }
 }
+
 
 void cleanGame(Game *pGame)
 {
