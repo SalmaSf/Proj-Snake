@@ -180,7 +180,106 @@ bool visaStartMeny(SDL_Renderer* renderer, bool* ljudPa)
     return false;
 }
 
-bool visaIPMeny(SDL_Renderer* renderer)
+bool visaIPMeny(SDL_Renderer* renderer, char* ipBuffer, int bufferSize)
+{
+    SDL_Texture* bakgrund = IMG_LoadTexture(renderer, "resources/ip_meny_bakgrund.png");
+    if (!bakgrund) 
+    {
+        SDL_Log("Kunde inte ladda ip_meny_bakgrund.png: %s", IMG_GetError());
+        if (!bakgrund) 
+        {
+            printf("Bakgrund kunde inte laddas\n");
+        }
+        return false;
+    }
+
+    SDL_Rect inputBox = { 0, 0, 400, 60 };
+    inputBox.x = (800 - inputBox.w) / 2;
+    inputBox.y = (700 - inputBox.h) / 2 + 15;
+
+    char ipInput[64] = " ";
+    SDL_StartTextInput();
+    
+    TTF_Font* font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 32);
+    if (!font) {
+        SDL_Log("Kunde inte ladda font: %s", TTF_GetError());
+        SDL_DestroyTexture(bakgrund);
+        SDL_StopTextInput();
+        return false;
+    }
+
+    SDL_Color svart = { 0, 0, 0, 255 };
+
+    bool isRunning = true;
+    SDL_Event event;
+
+    while (isRunning)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+                isRunning = false;
+
+            else if (event.type == SDL_KEYDOWN)
+            {
+                if (event.key.keysym.sym == SDLK_BACKSPACE && strlen(ipInput) > 0) {
+                    ipInput[strlen(ipInput) - 1] = '\0';
+                }
+                else if (event.key.keysym.sym == SDLK_RETURN) {
+                    isRunning = false; // Bekräfta IP och gå vidare
+                }
+                else if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    SDL_StopTextInput();
+                    TTF_CloseFont(font);
+                    SDL_DestroyTexture(bakgrund);
+                    return false;
+                }
+            }
+
+            else if (event.type == SDL_TEXTINPUT)
+            {
+                if (strlen(ipInput) + strlen(event.text.text) < sizeof(ipInput) - 1)
+                    strcat(ipInput, event.text.text);
+            }
+        }
+
+        // Rendera
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, bakgrund, NULL, NULL);
+
+        // Rita vit input-ruta
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderFillRect(renderer, &inputBox);
+
+        // Svart kant
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderDrawRect(renderer, &inputBox);
+
+        // Rendera text
+        SDL_Surface* textSurface = TTF_RenderText_Solid(font, ipInput, svart);
+        SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        SDL_Rect textRect = {
+            inputBox.x + 10,
+            inputBox.y + (inputBox.h - textSurface->h) / 2,
+            textSurface->w,
+            textSurface->h
+        };
+        SDL_FreeSurface(textSurface);
+
+        SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+        SDL_DestroyTexture(textTexture);
+
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16);
+    }
+
+    SDL_StopTextInput();
+    TTF_CloseFont(font);
+    SDL_DestroyTexture(bakgrund);
+    return true;
+}
+
+/*bool visaIPMeny(SDL_Renderer* renderer)
 {
     SDL_Texture* bakgrund = IMG_LoadTexture(renderer, "resources/ip_meny_bakgrund.png");
     if (!bakgrund) {
@@ -225,7 +324,7 @@ bool visaIPMeny(SDL_Renderer* renderer)
 
     SDL_DestroyTexture(bakgrund);
     return true;
-}
+}*/
 
 bool visaLobby(SDL_Renderer* renderer)
 {

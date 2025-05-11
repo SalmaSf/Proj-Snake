@@ -242,15 +242,17 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
 void runGame(Game *pGame)
 {
     bool ljudPa = true;
+    char ipBuffer[256]; // eller valfri storlek
 
     if (!visaStartMeny(pGame->pRenderer, &ljudPa))
         return;
 
-    if (!visaIPMeny(pGame->pRenderer))
+    if (!visaIPMeny(pGame->pRenderer, ipBuffer, sizeof(ipBuffer)))       
         return;
 
     if (!visaLobby(pGame->pRenderer))
         return;
+        
 
     GameResult result = gameLoop(
         pGame->snakes,
