@@ -244,6 +244,10 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
 void runGame(Game *pGame)
 {
     bool programRunning = true;
+    char ipBuffer[256]; 
+
+
+
     while (programRunning)
     {
         // STARTMENY – användaren kan välja att avsluta här
@@ -254,7 +258,7 @@ void runGame(Game *pGame)
         while (playAgain)
         {
             // Hoppa direkt till IP-meny → lobby → spel
-            if (!visaIPMeny(pGame->pRenderer)) break;
+            if (!visaIPMeny(pGame->pRenderer, ipBuffer, sizeof(ipBuffer))) break;
             if (!visaLobby(pGame->pRenderer)) break;
 
             for (int i = 0; i < 4; i++) {
