@@ -57,24 +57,6 @@ int main(int argc, char *argv[])
     Uint64 gameStartTime = 0;
     bool gameStarted = false;
 
-    if (!gameStarted && gameStartTime > 0 && SDL_GetTicks64() - gameStartTime >= 5000)
-    {
-        gameStarted = true;
-        printf("Spelet har börjat! Skickar START till klienter...\n");
-
-        const char *startMsg = "START";
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (game.clients[i].active)
-            {
-                memcpy(game.packet->data, startMsg, strlen(startMsg) + 1);
-                game.packet->len = strlen(startMsg) + 1;
-                game.packet->address = game.clients[i].address;
-                SDLNet_UDP_Send(game.socket, -1, game.packet);
-            }
-        }
-    }
-
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0)
     {
         printf("SDL_Init Error: %s\n", SDL_GetError());
@@ -126,17 +108,10 @@ int main(int argc, char *argv[])
             handlePacket(&game);
         }
 
-        if (game.numClients == 2 && gameStartTime == 0)
-        {
-            gameStartTime = SDL_GetTicks64();
-            printf("Två spelare anslutna. Startar om 5 sekunder...\n");
-        }
-
-        // Skicka START efter 5 sekunder
-        if (!gameStarted && gameStartTime > 0 && SDL_GetTicks64() - gameStartTime >= 5000)
+        if (!gameStarted && game.numClients == MAX_PLAYERS)
         {
             gameStarted = true;
-            printf("Spelet har börjat! Skickar START till klienter...\n");
+            printf("Fyra spelare anslutna. Startar spelet direkt...\n");
 
             const char *startMsg = "START";
             for (int i = 0; i < MAX_PLAYERS; i++)
@@ -150,7 +125,6 @@ int main(int argc, char *argv[])
                 }
             }
         }
-
         SDL_SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
         SDL_RenderClear(game.renderer);
         SDL_RenderCopy(game.renderer, game.background, NULL, NULL);
@@ -186,7 +160,7 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-/*
+
 void initServer(Game *pGame, SDL_Renderer *renderer)
 {
     pGame->renderer = renderer;
@@ -205,7 +179,7 @@ void initServer(Game *pGame, SDL_Renderer *renderer)
     {
         pGame->clients[i].active = false;
     }
-}*/
+}
 
 int getClientIndex(Game *game, IPaddress addr)
 {
@@ -219,36 +193,17 @@ int getClientIndex(Game *game, IPaddress addr)
         }
     }
 
-    if (game->numClients < MAX_PLAYERS) {
-        int index = game->numClients;
-        game->clients[index].address = addr;
-        game->clients[index].index = index;
-        game->clients[index].active = true;
-        game->snakes[index] = createSnake(
-            game->windowWidth / 2,
-            game->windowHeight / 2,
-            game->renderer,
-            game->windowWidth,
-            game->windowHeight,
-            "resources/purple_head.png",
-            "resources/purple_body.png");
-        game->numClients++;
-        printf("New client added at index %d\n", index);
-        return index;
-    }
-
-    /*if (game->numClients < MAX_PLAYERS)
+    if (game->numClients < MAX_PLAYERS)
     {
         int index = game->numClients;
         game->clients[index].address = addr;
         game->clients[index].index = index;
         game->clients[index].active = true;
 
-        // Ormen finns redan i game->snakes[index], så ingen ny orm skapas här
         game->numClients++;
         printf("New client added at index %d\n", index);
         return index;
-    }*/
+    }
 
     return -1;
 }
@@ -265,7 +220,7 @@ void handlePacket(Game *game)
         return;
     }
 
-    setSnakePosition(game->snakes[clientIndex], clientData.x, clientData.y);
+    //setSnakePosition(game->snakes[clientIndex], clientData.x, clientData.y);
     printf("Received from client %d: x=%d y=%d\n", clientIndex, clientData.x, clientData.y);
 }
 
@@ -274,8 +229,10 @@ void sendGameData(Game *game)
     ServerData serverData;
     serverData.numSnakes = game->numClients;
 
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        if (game->clients[i].active && game->snakes[i]) {
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (game->clients[i].active && game->snakes[i])
+        {
             serverData.x[i] = getSnakeHeadX(game->snakes[i]);
             serverData.y[i] = getSnakeHeadY(game->snakes[i]);
             serverData.isAlive[i] = isSnakeAlive(game->snakes[i]);
@@ -283,8 +240,10 @@ void sendGameData(Game *game)
         }
     }
 
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        if (game->clients[i].active) {
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (game->clients[i].active)
+        {
             serverData.myClientID = game->clients[i].index; // Set the ID for *this* client
             printf("Sending to client %d: myClientID = %d\n", i, serverData.myClientID);
             memcpy(game->packet->data, &serverData, sizeof(ServerData));
