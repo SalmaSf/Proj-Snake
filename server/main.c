@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    printf("Initiering lyckades. Kör spelet.\n");
+    printf("Initiering lyckades. Run game.\n");
     run(&pGame);
 
     cleanup(&pGame);
@@ -96,7 +96,7 @@ int initiate(Game *pGame)
         cleanup(pGame);
         return 0;
     }
-    printf("Skapar fönster...\n");
+    printf("Create window...\n");
 
     pGame->window = SDL_CreateWindow("Snake Server",
                                      SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -116,7 +116,7 @@ int initiate(Game *pGame)
         cleanup(pGame);
         return 0;
     }
-    printf("Öppnar UDP-socket på port %d...\n", PORT);
+    printf("Open UPD_socet att  %d...\n", PORT);
 
     pGame->socket = SDLNet_UDP_Open(PORT);
     if (!pGame->socket)
@@ -134,7 +134,7 @@ int initiate(Game *pGame)
         cleanup(pGame);
         return 0;
     }
-    printf("Initiering klar! Väntar på spelare...\n");
+    printf("Initiering klar! waiting for players...\n");
 
     pGame->running = true;
     pGame->state = START;
