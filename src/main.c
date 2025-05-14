@@ -60,7 +60,8 @@ int main(int argc, char *argv[])
 {
     Game game = {0};
 
-    if (!initGame(&game)) {
+    if (!initGame(&game))
+    {
         return 1;
     }
 
@@ -73,38 +74,47 @@ int main(int argc, char *argv[])
 
 int initGame(Game *pGame)
 {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+    {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());
         return 0;
     }
 
-    if (TTF_Init() < 0) {
+    if (TTF_Init() < 0)
+    {
         SDL_Log("TTF_Init failed: %s", TTF_GetError());
         return 0;
     }
 
     pGame->pWindow = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
-    if (!pGame->pWindow) return 0;
+    if (!pGame->pWindow)
+        return 0;
 
     pGame->pRenderer = SDL_CreateRenderer(pGame->pWindow, -1, SDL_RENDERER_ACCELERATED);
-    if (!pGame->pRenderer) return 0;
+    if (!pGame->pRenderer)
+        return 0;
 
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+    {
         SDL_Log("Mix_OpenAudio failed: %s", Mix_GetError());
         return 0;
     }
 
     pGame->music = Mix_LoadMUS("resources/bakgrund.wav");
-    if (!pGame->music) return 0;
+    if (!pGame->music)
+        return 0;
     Mix_PlayMusic(pGame->music, -1);
 
     pGame->collisionSound = Mix_LoadWAV("resources/snake_rattle.wav");
-    if (!pGame->collisionSound) return 0;
+    if (!pGame->collisionSound)
+        return 0;
 
     pGame->pBackground = loadBackground(pGame->pRenderer, "resources/bakgrund.png");
-    if (!pGame->pBackground) return 0;
+    if (!pGame->pBackground)
+        return 0;
 
-    for (int i = 0; i < MAX_PLAYERS; i++) {
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
         pGame->snakes[i] = NULL;
     }
 
@@ -112,7 +122,8 @@ int initGame(Game *pGame)
     pGame->playerIndexSet = false;
     pGame->state = START;
 
-    if (!initSnakeClient(pGame)) {
+    if (!initSnakeClient(pGame))
+    {
         SDL_Log("Nätverksfel vid initiering.");
         return 0;
     }
@@ -133,7 +144,8 @@ void runGame(Game *pGame)
         bool playAgain = true;
         while (playAgain)
         {
-            if (!visaIPMeny(pGame->pRenderer, ipBuffer, sizeof(ipBuffer))) break;
+            if (!visaIPMeny(pGame->pRenderer, ipBuffer, sizeof(ipBuffer)))
+                break;
 
             // Skicka "Joined"-meddelande
             const char *joinedMsg = "Joined";
@@ -141,10 +153,13 @@ void runGame(Game *pGame)
             pGame->packet->len = strlen(joinedMsg) + 1;
             SDLNet_UDP_Send(pGame->udpSocket, -1, pGame->packet);
 
-            if (!visaLobby(pGame->pRenderer)) break;
+            if (!visaLobby(pGame->pRenderer))
+                break;
 
-            for (int i = 0; i < MAX_PLAYERS; i++) {
-                if (pGame->snakes[i]) {
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                if (pGame->snakes[i])
+                {
                     destroySnake(pGame->snakes[i]);
                 }
             }
@@ -170,10 +185,12 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
     int gameTime = -1;
 
     TTF_Font *font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 24);
-    if (!font) {
+    if (!font)
+    {
         printf("Error loading font: %s\n", TTF_GetError());
-        return (GameResult){ false, 0.0f };
+        return (GameResult){false, 0.0f};
     }
+    printf("Game loop started\n"); // Debugging här
 
     SDL_Color textColor = {255, 255, 255, 255};
     SDL_Texture *timerTexture = NULL;
@@ -181,9 +198,11 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
 
     while (isRunning)
     {
-        if (isSnakeAlive(snakes[playerIndex])) {
+        if (isSnakeAlive(snakes[playerIndex]))
+        {
             int x = getSnakeHeadX(snakes[playerIndex]);
             int y = getSnakeHeadY(snakes[playerIndex]);
+            printf("Player %d snake position: (%d, %d)\n", playerIndex, x, y); // Debugging här
             sendSnakePosition(pGame, x, y);
         }
 
@@ -192,23 +211,29 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
         if (pGame->state == GAME_OVER)
             isRunning = false;
 
-        while (SDL_PollEvent(&event)) {
+        while (SDL_PollEvent(&event))
+        {
             if (event.type == SDL_QUIT ||
                 (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE))
                 isRunning = false;
         }
 
-        for (int i = 0; i < MAX_PLAYERS; i++) {
-            if (isSnakeAlive(snakes[i])) {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (isSnakeAlive(snakes[i]))
+            {
                 updateSnake(snakes[i]);
+                //printf("Snake %d updated\n", i);  // Debugging här
             }
         }
 
         int currentTime = (SDL_GetTicks64() - startTime) / 1000;
-        if (currentTime > gameTime) {
+        if (currentTime > gameTime)
+        {
             gameTime = currentTime;
 
-            if (timerTexture) SDL_DestroyTexture(timerTexture);
+            if (timerTexture)
+                SDL_DestroyTexture(timerTexture);
 
             char text[32];
             sprintf(text, "%02d:%02d", gameTime / 60, gameTime % 60);
@@ -225,13 +250,16 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, background, NULL, NULL);
 
-        for (int i = 0; i < MAX_PLAYERS; i++) {
-            if (isSnakeAlive(snakes[i])) {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            if (isSnakeAlive(snakes[i]))
+            {
                 drawSnake(snakes[i]);
             }
         }
 
-        if (timerTexture) {
+        if (timerTexture)
+        {
             SDL_RenderCopy(renderer, timerTexture, NULL, &timerRect);
         }
 
@@ -239,13 +267,13 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
         SDL_Delay(16);
     }
 
-    if (timerTexture) SDL_DestroyTexture(timerTexture);
+    if (timerTexture)
+        SDL_DestroyTexture(timerTexture);
     TTF_CloseFont(font);
 
     return (GameResult){
         .win = isSnakeAlive(snakes[playerIndex]),
-        .time = (float)gameTime
-    };
+        .time = (float)gameTime};
 }
 
 int initSnakeClient(Game *pGame)
@@ -268,6 +296,7 @@ int initSnakeClient(Game *pGame)
         SDL_Log("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
         return 0;
     }
+    printf("Successfully connected to server %s:%d\n", SERVER_IP, SERVER_PORT); // Debugging här
 
     pGame->packet = SDLNet_AllocPacket(512);
     if (!pGame->packet)
@@ -290,6 +319,7 @@ void sendSnakePosition(Game *pGame, int x, int y)
     data.clientID = pGame->playerIndex;
     data.alive = isSnakeAlive(pGame->snakes[pGame->playerIndex]);
     data.state = pGame->state;
+    printf("Sending position to server: (%d, %d), alive: %d, state: %d\n", x, y, data.alive, data.state); // Debugging här
 
     memcpy(pGame->packet->data, &data, sizeof(ClientData));
     pGame->packet->len = sizeof(ClientData);
@@ -310,12 +340,15 @@ void receiveServerUpdate(Game *pGame)
             pGame->playerIndexSet = true;
             printf("Client index set: %d\n", pGame->playerIndex);
         }
+        printf("Received server data: state = %d, num players = %d\n", pGame->state, serverData.numPlayers); // Debugging här
 
         for (int i = 0; i < serverData.numPlayers; i++)
         {
             SnakeInfo *s = &serverData.snakes[i];
+            printf("Updating snake %d: position (%d, %d), alive: %d\n", s->clientID, s->x, s->y, s->alive); // Debugging här
             setSnakePosition(pGame->snakes[s->clientID], s->x, s->y);
-            if (!s->alive) killSnake(pGame->snakes[s->clientID]);
+            if (!s->alive)
+                killSnake(pGame->snakes[s->clientID]);
         }
     }
 }
@@ -329,8 +362,10 @@ void closeSnakeClient(Game *pGame)
 
 void cleanGame(Game *pGame)
 {
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        if (pGame->snakes[i]) {
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (pGame->snakes[i])
+        {
             destroySnake(pGame->snakes[i]);
             pGame->snakes[i] = NULL;
         }

@@ -378,4 +378,4 @@ void addClient(IPaddress address, Game *pGame)
         pGame->numClients++;
         printf("New client added at index %d\n", index);
     }
-}
+} 
