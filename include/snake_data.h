@@ -1,26 +1,38 @@
 #ifndef SNAKE_DATA_H
 #define SNAKE_DATA_H
 
-#include <stdbool.h>
-
 #define MAX_PLAYERS 4
 
-// Klienten skickar sin position till servern
-typedef struct {
+typedef enum
+{
+    START,
+    ONGOING,
+    GAME_OVER
+} GameState;
+
+typedef struct
+{
+    int clientID;
     int x;
     int y;
-    bool isAlive;
-    int clientID;
-} ClientData;
+    int alive;
+    GameState state;
+} ClientData; // Sent from client to server
 
-// Servern skickar tillbaka info om alla spelare
-typedef struct {
-    int x[MAX_PLAYERS];         // Huvudets x-position för varje orm
-    int y[MAX_PLAYERS];         // Huvudets y-position för varje orm
-    bool isAlive[MAX_PLAYERS];  // Lever orm i index i?
-    int clientID[MAX_PLAYERS];  // Identifierar varje spelare
-    int numSnakes; // Antal aktiva ormar
-    int myClientID;
-} ServerData;
+typedef struct
+{
+    int clientID;
+    int x;
+    int y;
+    int alive;
+} SnakeInfo;
+
+typedef struct
+{
+    SnakeInfo snakes[MAX_PLAYERS];
+    int numPlayers;
+    GameState state;
+} ServerData; // Sent from server to clients
 
 #endif
+
