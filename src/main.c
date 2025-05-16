@@ -11,7 +11,7 @@
 #include "meny.h"
 #include "snake_data.h"
 
-#define SERVER_IP "127.0.0.1"
+//#define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 2000
 
 const int WINDOW_WIDTH = 800;
@@ -50,7 +50,7 @@ int initGame(Game *pGame);
 void runGame(Game *pGame);
 void cleanGame(Game *pGame);
 
-int initSnakeClient(Game *pGame);
+int initSnakeClient(Game *pGame, const char *ipAddress);
 void sendSnakePosition(Game *pGame, int x, int y);
 void receiveServerUpdate(Game *pGame);
 void closeSnakeClient(Game *pGame);
@@ -122,12 +122,6 @@ int initGame(Game *pGame)
     pGame->playerIndexSet = false;
     pGame->state = START;
 
-    if (!initSnakeClient(pGame))
-    {
-        SDL_Log("Nätverksfel vid initiering.");
-        return 0;
-    }
-
     return 1;
 }
 
@@ -138,6 +132,7 @@ void runGame(Game *pGame)
 
     while (programRunning)
     {
+
         if (!visaStartMeny(pGame->pRenderer, &pGame->ljudPa))
             break;
 
@@ -146,6 +141,18 @@ void runGame(Game *pGame)
         {
             if (!visaIPMeny(pGame->pRenderer, ipBuffer, sizeof(ipBuffer)))
                 break;
+
+            // Flytta utskriften hit – efter att användaren har matat in IP-adress
+            if (strlen(ipBuffer) > 0)
+                printf("User entered IP: %s\n", ipBuffer);
+            else
+                printf("No IP address entered.\n");
+
+            if (!initSnakeClient(pGame, ipBuffer))
+            {
+                SDL_Log("Nätverksfel vid initiering.");
+                break;
+            }
 
             // Skicka "Joined"-meddelande
             const char *joinedMsg = "Joined";
@@ -223,7 +230,7 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
             if (isSnakeAlive(snakes[i]))
             {
                 updateSnake(snakes[i]);
-                //printf("Snake %d updated\n", i);  // Debugging här
+                // printf("Snake %d updated\n", i);  // Debugging här
             }
         }
 
@@ -276,7 +283,7 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
         .time = (float)gameTime};
 }
 
-int initSnakeClient(Game *pGame)
+int initSnakeClient(Game *pGame, const char *ipAddress)
 {
     if (SDLNet_Init() < 0)
     {
@@ -291,12 +298,12 @@ int initSnakeClient(Game *pGame)
         return 0;
     }
 
-    if (SDLNet_ResolveHost(&pGame->serverAddr, SERVER_IP, SERVER_PORT) < 0)
+    if (SDLNet_ResolveHost(&pGame->serverAddr, ipAddress, SERVER_PORT) < 0)
     {
         SDL_Log("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
         return 0;
     }
-    printf("Successfully connected to server %s:%d\n", SERVER_IP, SERVER_PORT); // Debugging här
+    printf("Successfully connected to server %s:%d\n", ipAddress, SERVER_PORT); // Debugging här
 
     pGame->packet = SDLNet_AllocPacket(512);
     if (!pGame->packet)

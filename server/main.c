@@ -233,6 +233,7 @@ void run(Game *pGame)
             break;
 
         case START:
+    
             SDL_SetRenderDrawColor(pGame->renderer, 0, 0, 0, 255);
             SDL_RenderClear(pGame->renderer);
             // TODO: Lägg till "Väntar på spelare" grafik eller text
@@ -243,6 +244,7 @@ void run(Game *pGame)
 
             if (SDLNet_UDP_Recv(pGame->socket, pGame->packet) == 1)
             {
+                
                 addClient(pGame->packet->address, pGame);
                 if (pGame->numClients == MAX_PLAYERS)
                 {
