@@ -152,6 +152,8 @@ void run(Game *pGame)
         switch (pGame->state)
         {
         case ONGOING:
+            printf("[ONGOING] Spel pågår. Skickar speldata till klienter.\n");
+
             sendGameData(pGame);
 
             while (SDLNet_UDP_Recv(pGame->socket, pGame->packet) == 1)
@@ -161,6 +163,12 @@ void run(Game *pGame)
                 if (clientIndex >= 0)
                 {
                     pGame->clients[clientIndex].data = cData;
+                    printf("[RECV] Data från klient %d: x=%d, y=%d, alive=%d\n",
+                           clientIndex, cData.x, cData.y, cData.alive);
+                }
+                else
+                {
+                    printf("[RECV] Okänd klient. Paket ignorerat.\n");
                 }
             }
 
@@ -176,6 +184,7 @@ void run(Game *pGame)
                         setSnakePosition(pGame->snakes[i], data->x, data->y);
                     else
                         killSnake(pGame->snakes[i]);
+                    printf("[SNAKE] Orm %d död.\n", i);
                 }
             }
 
@@ -188,6 +197,7 @@ void run(Game *pGame)
                         if (checkCollision(pGame->snakes[i], pGame->snakes[j]))
                         {
                             killSnake(pGame->snakes[j]);
+                            printf("[KOLLISION] Orm %d kolliderade med orm %d och dog.\n", j, i);
                         }
                     }
                 }
@@ -202,9 +212,12 @@ void run(Game *pGame)
                     aliveCount++;
                 }
             }
+            printf("[STATUS] Antal levande ormar: %d\n", aliveCount);
 
             if (aliveCount <= 1)
             {
+                printf("[GAME OVER] Endast %d orm(ar) kvar. Spelet avslutas.\n", aliveCount);
+
                 pGame->state = GAME_OVER;
             }
 
@@ -225,6 +238,8 @@ void run(Game *pGame)
             break;
 
         case GAME_OVER:
+            printf("[STATE] GAME_OVER - skickar slutdata till klienter.\n");
+
             sendGameData(pGame);
             SDL_SetRenderDrawColor(pGame->renderer, 0, 0, 0, 255);
             SDL_RenderClear(pGame->renderer);
@@ -233,7 +248,23 @@ void run(Game *pGame)
             break;
 
         case START:
-    
+            printf("[STATE] START - Väntar på klienter... (%d/%d anslutna)\n", pGame->numClients, MAX_PLAYERS);
+
+            int recvResult = SDLNet_UDP_Recv(pGame->socket, pGame->packet);
+            if (recvResult == 1)
+            {
+                printf("[NET] Paket mottaget i START.\n");
+
+                addClient(pGame->packet->address, pGame);
+                printf("[START] Ny klient ansluten. Totalt: %d\n", pGame->numClients);
+
+                if (pGame->numClients == MAX_PLAYERS)
+                {
+                    printf("[START] MAX_PLAYERS uppnått. Startar spel...\n");
+                    setUpGame(pGame);
+                    pGame->state = ONGOING;
+                }
+            }
             SDL_SetRenderDrawColor(pGame->renderer, 0, 0, 0, 255);
             SDL_RenderClear(pGame->renderer);
             // TODO: Lägg till "Väntar på spelare" grafik eller text
@@ -244,10 +275,13 @@ void run(Game *pGame)
 
             if (SDLNet_UDP_Recv(pGame->socket, pGame->packet) == 1)
             {
-                
+
                 addClient(pGame->packet->address, pGame);
+                printf("[START] Ny klient ansluten. Totalt: %d\n", pGame->numClients);
+
                 if (pGame->numClients == MAX_PLAYERS)
                 {
+                    printf("[START] MAX_PLAYERS uppnått. Startar spel...\n");
                     setUpGame(pGame);
                     pGame->state = ONGOING;
                 }
@@ -380,4 +414,4 @@ void addClient(IPaddress address, Game *pGame)
         pGame->numClients++;
         printf("New client added at index %d\n", index);
     }
-} 
+}
