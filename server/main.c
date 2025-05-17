@@ -273,19 +273,7 @@ void run(Game *pGame)
             if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
                 pGame->running = false;
 
-            if (SDLNet_UDP_Recv(pGame->socket, pGame->packet) == 1)
-            {
-
-                addClient(pGame->packet->address, pGame);
-                printf("[START] Ny klient ansluten. Totalt: %d\n", pGame->numClients);
-
-                if (pGame->numClients == MAX_PLAYERS)
-                {
-                    printf("[START] MAX_PLAYERS uppnått. Startar spel...\n");
-                    setUpGame(pGame);
-                    pGame->state = ONGOING;
-                }
-            }
+            
             break;
         }
 
