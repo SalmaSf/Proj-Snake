@@ -11,7 +11,7 @@
 #include "meny.h"
 #include "snake_data.h"
 
-//#define SERVER_IP "127.0.0.1"
+// #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 2000
 
 const int WINDOW_WIDTH = 800;
@@ -132,43 +132,62 @@ void runGame(Game *pGame)
 
     while (programRunning)
     {
-
         if (!visaStartMeny(pGame->pRenderer, &pGame->ljudPa))
             break;
 
         bool playAgain = true;
         while (playAgain)
         {
+            // 1. IP-meny
             if (!visaIPMeny(pGame->pRenderer, ipBuffer, sizeof(ipBuffer)))
                 break;
 
-            // Flytta utskriften hit – efter att användaren har matat in IP-adress
             if (strlen(ipBuffer) > 0)
                 printf("User entered IP: %s\n", ipBuffer);
             else
                 printf("No IP address entered.\n");
 
+            // 2. Initiera nätverk
             if (!initSnakeClient(pGame, ipBuffer))
             {
                 SDL_Log("Nätverksfel vid initiering.");
                 break;
             }
 
-            // Skicka "Joined"-meddelande
+            // 3. Skicka "joined"
             const char *joinedMsg = "Joined";
             memcpy(pGame->packet->data, joinedMsg, strlen(joinedMsg) + 1);
             pGame->packet->len = strlen(joinedMsg) + 1;
             SDLNet_UDP_Send(pGame->udpSocket, -1, pGame->packet);
 
-            if (!visaLobby(pGame->pRenderer))
-                break;
+            // 4. Vänta i lobby
+            bool inLobby = true;
+            while (inLobby)
+            {
+                receiveServerUpdate(pGame); // Få state från server
 
+                if (pGame->state == ONGOING)
+                {
+                    printf("[LOBBY] Spelet startar!\n");
+                    inLobby = false;
+                    break;
+                }
+
+                if (!visaLobby(pGame->pRenderer)) // ESC eller avbryt
+                {
+                    playAgain = false;
+                    inLobby = false;
+                    break;
+                }
+
+                SDL_Delay(100); // För att spara CPU
+            }
+
+            // 5. Skapa ormar
             for (int i = 0; i < MAX_PLAYERS; i++)
             {
                 if (pGame->snakes[i])
-                {
                     destroySnake(pGame->snakes[i]);
-                }
             }
 
             pGame->snakes[0] = createSnake(WINDOW_WIDTH / 2, 0, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/purple_head.png", "resources/purple_body.png");
@@ -176,6 +195,7 @@ void runGame(Game *pGame)
             pGame->snakes[2] = createSnake(0, WINDOW_HEIGHT / 2, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/green_head.png", "resources/green_body.png");
             pGame->snakes[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");
 
+            // 6. Starta spelet
             GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame->playerIndex, pGame);
             int val = visaResultatskarm(pGame->pRenderer, result.win, result.time);
             if (val == 0)
