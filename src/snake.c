@@ -279,3 +279,11 @@ void destroySnake(Snake *pSnake)
         SDL_DestroyTexture(pSnake->pSegmentTexture);
     free(pSnake);
 }
+
+void reviveSnake(Snake *snake)
+{
+    if (snake)
+    {
+        snake->isAlive = true;
+    }
+}

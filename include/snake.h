@@ -22,7 +22,7 @@ void addSegment(Snake *pSnake);
 void updateSegments(Snake *pSnake);
 int getSnakeHeadX(Snake *snake);
 int getSnakeHeadY(Snake *snake);
-
+void reviveSnake(Snake *snake);
 
 bool checkCollision(Snake *attacker, Snake *target);
 bool isSnakeAlive(Snake *snake);
