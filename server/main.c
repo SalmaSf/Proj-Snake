@@ -127,7 +127,7 @@ int initiate(Game *pGame)
     }
     printf("Allokerar UDP-paket...\n");
 
-    pGame->packet = SDLNet_AllocPacket(BUFFER_SIZE);
+    pGame->packet = SDLNet_AllocPacket(sizeof(ServerData));
     if (!pGame->packet)
     {
         printf("SDLNet_AllocPacket Error: %s\n", SDLNet_GetError());
@@ -135,6 +135,7 @@ int initiate(Game *pGame)
         return 0;
     }
     printf("Initiering klar! waiting for players...\n");
+    printf("✅ packet->maxlen = %d, sizeof(ServerData) = %lu\n", pGame->packet->maxlen, sizeof(ServerData));
 
     pGame->running = true;
     pGame->state = START;
@@ -258,6 +259,7 @@ void run(Game *pGame)
                 addClient(pGame->packet->address, pGame);
                 printf("[START] Ny klient ansluten. Totalt: %d\n", pGame->numClients);
 
+                sendGameData(pGame);
                 if (pGame->numClients == MAX_PLAYERS)
                 {
                     printf("[START] MAX_PLAYERS uppnått. Startar spel...\n");
@@ -273,7 +275,6 @@ void run(Game *pGame)
             if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
                 pGame->running = false;
 
-            
             break;
         }
 
@@ -297,7 +298,7 @@ void cleanup(Game *pGame)
     SDLNet_Quit();
     SDL_Quit();
 }
-
+/*
 void setUpGame(Game *pGame)
 {
     for (int i = 0; i < MAX_PLAYERS; i++)
@@ -314,6 +315,28 @@ void setUpGame(Game *pGame)
     pGame->snakes[3] = createSnake(800, 350, pGame->renderer, 800, 700, "resources/pink_head.png", "resources/pink_body.png");
 
     pGame->state = ONGOING;
+}*/
+
+void setUpGame(Game *pGame)
+{
+    // Ta bort gamla ormar om de finns
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (pGame->snakes[i])
+        {
+            destroySnake(pGame->snakes[i]);
+            pGame->snakes[i] = NULL;
+        }
+    }
+
+    // Nollställ clients också (valfritt)
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        pGame->clients[i].active = false;
+    }
+
+    pGame->numClients = 0;
+    pGame->state = ONGOING;
 }
 
 void sendGameData(Game *pGame)
@@ -321,7 +344,7 @@ void sendGameData(Game *pGame)
     pGame->sData.numPlayers = pGame->numClients;
     pGame->sData.state = pGame->state;
 
-    for (int i = 0; i < MAX_PLAYERS; i++)
+    /*for (int i = 0; i < MAX_PLAYERS; i++)
     {
         pGame->sData.snakes[i].clientID = i;
         pGame->sData.snakes[i].x = getSnakeHeadX(pGame->snakes[i]);
@@ -335,17 +358,56 @@ void sendGameData(Game *pGame)
         {
             pGame->sData.snakes[i].alive = false;
         }
+    }*/
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        pGame->sData.snakes[i].clientID = i;
+
+        if (pGame->snakes[i] != NULL)
+        {
+            pGame->sData.snakes[i].x = getSnakeHeadX(pGame->snakes[i]);
+            pGame->sData.snakes[i].y = getSnakeHeadY(pGame->snakes[i]);
+            pGame->sData.snakes[i].alive = isSnakeAlive(pGame->snakes[i]);
+        }
+        else
+        {
+            pGame->sData.snakes[i].x = -1;
+            pGame->sData.snakes[i].y = -1;
+            pGame->sData.snakes[i].alive = false;
+        }
     }
 
-    for (int i = 0; i < MAX_PLAYERS; i++)
+    /*for (int i = 0; i < MAX_PLAYERS; i++)
     {
         if (pGame->clients[i].active)
         {
             if (sizeof(pGame->packet->data) >= sizeof(ServerData))
             {
                 memcpy(pGame->packet->data, &pGame->sData, sizeof(ServerData));
+                printf("sizeof(ServerData) = %lu, packet->maxlen = %d\n", sizeof(ServerData), pGame->packet->maxlen);
                 pGame->packet->len = sizeof(ServerData);
             }
+            pGame->packet->address = pGame->clients[i].address;
+            SDLNet_UDP_Send(pGame->socket, -1, pGame->packet);
+        }
+    }*/
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        if (pGame->clients[i].active)
+        {
+            if (pGame->packet->maxlen >= sizeof(ServerData)) // ✅ FIXAD KOLL
+            {
+                memcpy(pGame->packet->data, &pGame->sData, sizeof(ServerData));
+                pGame->packet->len = sizeof(ServerData);
+                printf("Kopierade ServerData till paket (size = %lu bytes)\n", sizeof(ServerData));
+            }
+            else
+            {
+                printf(" ServerData för stor för paketbuffer! maxlen=%d, krävs=%lu\n",
+                       pGame->packet->maxlen, sizeof(ServerData));
+                continue; // hoppa över sändning
+            }
+
             pGame->packet->address = pGame->clients[i].address;
             SDLNet_UDP_Send(pGame->socket, -1, pGame->packet);
         }
@@ -389,7 +451,77 @@ void addClient(IPaddress address, Game *pGame)
 {
     for (int i = 0; i < pGame->numClients; i++)
     {
-        if (address.host == pGame->clients[i].address.host && address.port == pGame->clients[i].address.port)
+        if (address.host == pGame->clients[i].address.host &&
+            address.port == pGame->clients[i].address.port)
+            return;
+    }
+
+    if (pGame->numClients < MAX_PLAYERS)
+    {
+        int index = pGame->numClients;
+        pGame->clients[index].address = address;
+        pGame->clients[index].index = index;
+        pGame->clients[index].active = true;
+        pGame->numClients++;
+
+        int clientID = index;
+        memcpy(pGame->packet->data, &clientID, sizeof(int));
+        pGame->packet->len = sizeof(int);
+        pGame->packet->address.host = address.host;
+        pGame->packet->address.port = address.port;
+        if (!SDLNet_UDP_Send(pGame->socket, -1, pGame->packet))
+        {
+            perror("Kunde inte skicka clientID till klient");
+        }
+        else
+        {
+            printf("Skickade clientID %d till klienten\n", clientID);
+        }
+
+        printf(" New client added at index %d\n", index);
+
+        // 🐍 Skapa orm för denna klient
+        if (pGame->snakes[index])
+        {
+            destroySnake(pGame->snakes[index]);
+        }
+        printf("Skickade clientID %d till klienten\n", clientID);
+        //  Olika startpositioner och färger per klient
+        switch (index)
+        {
+        case 0:
+            pGame->snakes[index] = createSnake(400, 0, pGame->renderer, 800, 700, "resources/purple_head.png", "resources/purple_body.png");
+            pGame->sData.snakes[index].alive = 1;
+            break;
+        case 1:
+            pGame->snakes[index] = createSnake(400, 700, pGame->renderer, 800, 700, "resources/yellow_head.png", "resources/yellow_body.png");
+            pGame->sData.snakes[index].alive = 1;
+            break;
+        case 2:
+            pGame->snakes[index] = createSnake(0, 350, pGame->renderer, 800, 700, "resources/green_head.png", "resources/green_body.png");
+            pGame->sData.snakes[index].alive = 1;
+            break;
+        case 3:
+            pGame->snakes[index] = createSnake(800, 350, pGame->renderer, 800, 700, "resources/pink_head.png", "resources/pink_body.png");
+            pGame->sData.snakes[index].alive = 1;
+            break;
+        default:
+            printf(" Ogiltigt ormindex %d\n", index);
+        }
+    }
+    else
+    {
+        printf(" Max antal klienter (%d) uppnått.\n", MAX_PLAYERS);
+    }
+}
+
+/*
+void addClient(IPaddress address, Game *pGame)
+{
+    for (int i = 0; i < pGame->numClients; i++)
+    {
+        if (address.host == pGame->clients[i].address.host &&
+             address.port == pGame->clients[i].address.port)
             return;
     }
 
@@ -402,4 +534,8 @@ void addClient(IPaddress address, Game *pGame)
         pGame->numClients++;
         printf("New client added at index %d\n", index);
     }
-}
+    else
+    {
+        printf("Max antal klienter (%d) uppnått.\n", MAX_PLAYERS);
+    }
+}*/

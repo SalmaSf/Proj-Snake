@@ -15,7 +15,7 @@ typedef struct
     int clientID;
     int x;
     int y;
-    int alive;
+    bool alive;
     GameState state;
 } ClientData; // Sent from client to server
 
@@ -24,7 +24,7 @@ typedef struct
     int clientID;
     int x;
     int y;
-    int alive;
+    bool alive;
 } SnakeInfo;
 
 typedef struct

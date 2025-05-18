@@ -153,7 +153,11 @@ void runGame(Game *pGame)
                 SDL_Log("Nätverksfel vid initiering.");
                 break;
             }
-
+            // Sätt alla snakes till NULL innan du börjar ta emot data från servern
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                pGame->snakes[i] = NULL;
+            }
             // 3. Skicka "joined"
             const char *joinedMsg = "Joined";
             memcpy(pGame->packet->data, joinedMsg, strlen(joinedMsg) + 1);
@@ -297,6 +301,7 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
     if (timerTexture)
         SDL_DestroyTexture(timerTexture);
     TTF_CloseFont(font);
+    printf("[GAME] Game over. Väntar på serverresultat...\n");
 
     return (GameResult){
         .win = isSnakeAlive(snakes[playerIndex]),
@@ -332,8 +337,35 @@ int initSnakeClient(Game *pGame, const char *ipAddress)
         return 0;
     }
 
-    pGame->packet->address.host = pGame->serverAddr.host;
-    pGame->packet->address.port = pGame->serverAddr.port;
+    // Skicka JOIN
+    const char *joinMsg = "JOIN";
+    memcpy(pGame->packet->data, joinMsg, strlen(joinMsg) + 1);
+    pGame->packet->address = pGame->serverAddr;
+    pGame->packet->len = strlen(joinMsg) + 1;
+    SDLNet_UDP_Send(pGame->udpSocket, -1, pGame->packet);
+
+    // Vänta på clientID
+    Uint32 start = SDL_GetTicks();
+    while (SDL_GetTicks() - start < 5000)
+    {
+        if (SDLNet_UDP_Recv(pGame->udpSocket, pGame->packet))
+        {
+            int clientID;
+            memcpy(&clientID, pGame->packet->data, sizeof(int));
+            pGame->playerIndex = clientID;
+            pGame->playerIndexSet = true;
+            printf(" Fick mitt clientID från servern: %d\n", clientID);
+            break;
+        }
+    }
+
+    if (!pGame->playerIndexSet)
+    {
+        printf(" Kunde inte ta emot clientID från servern\n");
+        return 0;
+    }
+    // pGame->packet->address.host = pGame->serverAddr.host;
+    // pGame->packet->address.port = pGame->serverAddr.port;
 
     return 1;
 }
@@ -357,9 +389,14 @@ void receiveServerUpdate(Game *pGame)
 {
     if (SDLNet_UDP_Recv(pGame->udpSocket, pGame->packet))
     {
+        printf(" Paket mottaget från servern (len = %d)\n", pGame->packet->len);
+
         ServerData serverData;
         memcpy(&serverData, pGame->packet->data, sizeof(ServerData));
+        printf(" ServerData.numPlayers = %d\n", serverData.numPlayers);
+
         pGame->state = serverData.state;
+        printf("Received server data: state = %d, num players = %d\n", pGame->state, serverData.numPlayers);
 
         if (!pGame->playerIndexSet)
         {
@@ -368,14 +405,64 @@ void receiveServerUpdate(Game *pGame)
             printf("Client index set: %d\n", pGame->playerIndex);
         }
         printf("Received server data: state = %d, num players = %d\n", pGame->state, serverData.numPlayers); // Debugging här
-
-        for (int i = 0; i < serverData.numPlayers; i++)
+        printf("Num players i serverData: %d\n", serverData.numPlayers);
+        /*for (int i = 0; i < serverData.numPlayers; i++)
         {
             SnakeInfo *s = &serverData.snakes[i];
             printf("Updating snake %d: position (%d, %d), alive: %d\n", s->clientID, s->x, s->y, s->alive); // Debugging här
             setSnakePosition(pGame->snakes[s->clientID], s->x, s->y);
             if (!s->alive)
                 killSnake(pGame->snakes[s->clientID]);
+        }*/
+
+        for (int i = 0; i < serverData.numPlayers; i++)
+        {
+            SnakeInfo *s = &serverData.snakes[i];
+            printf(" Updating snake %d: position (%d, %d), alive: %d\n", s->clientID, s->x, s->y, s->alive);
+
+            //  Skapa ormen om den inte redan finns och är alive
+            if (s->alive && pGame->snakes[s->clientID] == NULL)
+            {
+                const char *head = "resources/purple_head.png";
+                const char *body = "resources/purple_body.png";
+
+                // 🔁 Olika färger för olika ormar
+                switch (s->clientID)
+                {
+                case 0:
+                    head = "resources/purple_head.png";
+                    body = "resources/purple_body.png";
+                    break;
+                case 1:
+                    head = "resources/yellow_head.png";
+                    body = "resources/yellow_body.png";
+                    break;
+                case 2:
+                    head = "resources/green_head.png";
+                    body = "resources/green_body.png";
+                    break;
+                case 3:
+                    head = "resources/pink_head.png";
+                    body = "resources/pink_body.png";
+                    break;
+                }
+
+                pGame->snakes[s->clientID] = createSnake(s->x, s->y, pGame->pRenderer, 800, 700, head, body);
+                printf("Skapade orm %d på (%d, %d)\n", s->clientID, s->x, s->y);
+            }
+
+            //  Kontroll så vi inte försöker uppdatera NULL
+            if (pGame->snakes[s->clientID])
+            {
+                if (s->alive)
+                    setSnakePosition(pGame->snakes[s->clientID], s->x, s->y);
+                else
+                    killSnake(pGame->snakes[s->clientID]);
+            }
+            else
+            {
+                printf(" pGame->snakes[%d] är NULL, kan inte uppdatera position.\n", s->clientID);
+            }
         }
     }
 }

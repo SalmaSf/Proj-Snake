@@ -44,6 +44,7 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
     pSnake->historyIndex = 0;
 
     pSnake->isAlive = true;
+    
 
     SDL_Surface *pSurface = IMG_Load(headTexturePath);
     if (!pSurface)
