@@ -153,12 +153,14 @@ void run(Game *pGame)
         switch (pGame->state)
         {
         case ONGOING:
-            printf("[ONGOING] Spel pågår. Skickar speldata till klienter.\n");
-
             sendGameData(pGame);
 
             while (SDLNet_UDP_Recv(pGame->socket, pGame->packet) == 1)
             {
+                // ✔✔ FIX 3: Ignorera inkommande klientpaket om spelet inte pågår
+                if (pGame->state != ONGOING)
+                    continue;
+
                 memcpy(&cData, pGame->packet->data, sizeof(ClientData));
                 int clientIndex = getClientIndex(pGame, &pGame->packet->address);
                 if (clientIndex >= 0)
@@ -249,6 +251,11 @@ void run(Game *pGame)
             break;
 
         case START:
+            while (SDL_PollEvent(&event))
+            {
+                if (event.type == SDL_QUIT)
+                    pGame->running = false;
+            }
             printf("[STATE] START - Väntar på klienter... (%d/%d anslutna)\n", pGame->numClients, MAX_PLAYERS);
 
             int recvResult = SDLNet_UDP_Recv(pGame->socket, pGame->packet);
@@ -267,15 +274,17 @@ void run(Game *pGame)
                     pGame->state = ONGOING;
                 }
             }
-            SDL_SetRenderDrawColor(pGame->renderer, 0, 0, 0, 255);
             SDL_RenderClear(pGame->renderer);
             // TODO: Lägg till "Väntar på spelare" grafik eller text
             SDL_RenderPresent(pGame->renderer);
+<<<<<<< HEAD
 
             if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
                 pGame->running = false;
 
             break;
+=======
+>>>>>>> 09822e612e6f3e9402248bf7d4de673752cd920c
         }
 
         SDL_Delay(1000 / 60);
@@ -347,15 +356,16 @@ void sendGameData(Game *pGame)
     /*for (int i = 0; i < MAX_PLAYERS; i++)
     {
         pGame->sData.snakes[i].clientID = i;
-        pGame->sData.snakes[i].x = getSnakeHeadX(pGame->snakes[i]);
-        pGame->sData.snakes[i].y = getSnakeHeadY(pGame->snakes[i]);
-        // pGame->sData.snakes[i].alive = pGame->snakes[i] && isSnakeAlive(pGame->snakes[i]);
-        if (pGame->snakes[i] != NULL && isSnakeAlive(pGame->snakes[i]))
+        if (pGame->snakes[i])
         {
-            pGame->sData.snakes[i].alive = true;
+            pGame->sData.snakes[i].x = getSnakeHeadX(pGame->snakes[i]);
+            pGame->sData.snakes[i].y = getSnakeHeadY(pGame->snakes[i]);
+            pGame->sData.snakes[i].alive = isSnakeAlive(pGame->snakes[i]);
         }
         else
         {
+            pGame->sData.snakes[i].x = 0;
+            pGame->sData.snakes[i].y = 0;
             pGame->sData.snakes[i].alive = false;
         }
     }*/
@@ -381,6 +391,7 @@ void sendGameData(Game *pGame)
     {
         if (pGame->clients[i].active)
         {
+<<<<<<< HEAD
             if (sizeof(pGame->packet->data) >= sizeof(ServerData))
             {
                 memcpy(pGame->packet->data, &pGame->sData, sizeof(ServerData));
@@ -408,6 +419,10 @@ void sendGameData(Game *pGame)
                 continue; // hoppa över sändning
             }
 
+=======
+            memcpy(pGame->packet->data, &pGame->sData, sizeof(ServerData));
+            pGame->packet->len = sizeof(ServerData);
+>>>>>>> 09822e612e6f3e9402248bf7d4de673752cd920c
             pGame->packet->address = pGame->clients[i].address;
             SDLNet_UDP_Send(pGame->socket, -1, pGame->packet);
         }

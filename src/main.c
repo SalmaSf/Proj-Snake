@@ -372,13 +372,15 @@ int initSnakeClient(Game *pGame, const char *ipAddress)
 
 void sendSnakePosition(Game *pGame, int x, int y)
 {
+    if (pGame->state != ONGOING)
+        return; // ✔✔ FIX 2: Skicka inget om spelet inte är igång
+
     ClientData data = {0};
     data.x = x;
     data.y = y;
     data.clientID = pGame->playerIndex;
     data.alive = isSnakeAlive(pGame->snakes[pGame->playerIndex]);
     data.state = pGame->state;
-    printf("Sending position to server: (%d, %d), alive: %d, state: %d\n", x, y, data.alive, data.state); // Debugging här
 
     memcpy(pGame->packet->data, &data, sizeof(ClientData));
     pGame->packet->len = sizeof(ClientData);
@@ -400,16 +402,28 @@ void receiveServerUpdate(Game *pGame)
 
         if (!pGame->playerIndexSet)
         {
-            pGame->playerIndex = serverData.snakes[0].clientID;
-            pGame->playerIndexSet = true;
-            printf("Client index set: %d\n", pGame->playerIndex);
+            // ✔✔ FIX 1: Sätt korrekt playerIndex (inte alltid 0!)
+            for (int i = 0; i < serverData.numPlayers; i++)
+            {
+                if (serverData.snakes[i].x != 0 || serverData.snakes[i].y != 0)
+                {
+                    pGame->playerIndex = i;
+                    pGame->playerIndexSet = true;
+                    printf("Client index set: %d\n", i);
+                    break;
+                }
+            }
         }
+<<<<<<< HEAD
         printf("Received server data: state = %d, num players = %d\n", pGame->state, serverData.numPlayers); // Debugging här
         printf("Num players i serverData: %d\n", serverData.numPlayers);
         /*for (int i = 0; i < serverData.numPlayers; i++)
+=======
+
+        for (int i = 0; i < serverData.numPlayers; i++)
+>>>>>>> 09822e612e6f3e9402248bf7d4de673752cd920c
         {
             SnakeInfo *s = &serverData.snakes[i];
-            printf("Updating snake %d: position (%d, %d), alive: %d\n", s->clientID, s->x, s->y, s->alive); // Debugging här
             setSnakePosition(pGame->snakes[s->clientID], s->x, s->y);
             if (!s->alive)
                 killSnake(pGame->snakes[s->clientID]);
