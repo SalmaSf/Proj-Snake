@@ -29,7 +29,6 @@ struct snake
     int historyIndex;
     Uint32 lastSegmentTime;
     bool isAlive;
-    float targetx, targety;
 };
 
 Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height, const char *headTexturePath, const char *segmentTexturePath)
@@ -114,26 +113,29 @@ void updateSegments(Snake *pSnake)
     }
 }
 
-
-void updateSnake(Snake *pSnake, int targetX, int targetY)
+void updateSnake(Snake *pSnake)
 {
-    /* --- 1. Räkna vektor till mål --- */
-    float dx = targetX - pSnake->head->x;
-    float dy = targetY - pSnake->head->y;
-    float distance = sqrtf(dx * dx + dy * dy);
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
 
-    /* --- 2. Bestäm riktning (sparad om musen lämnar fönstret) --- */
     static float lastAngle = 0.0f;
-    if (targetX >= 0 && targetX <= pSnake->window_width &&
-        targetY >= 0 && targetY <= pSnake->window_height)
+    float dx = mouseX - pSnake->head->x;
+    float dy = mouseY - pSnake->head->y;
+
+    pSnake->headRectAngle = atan2f(dy, dx) * 180.0f / M_PI;
+
+    if (mouseX >= 0 && mouseX <= pSnake->window_width &&
+        mouseY >= 0 && mouseY <= pSnake->window_height)
     {
         lastAngle = atan2f(dy, dx);
     }
 
-    /* — 3. Flytta huvudet ett steg — */
+    float distance = sqrtf(dx * dx + dy * dy);
+
     float moveX = cosf(lastAngle) * pSnake->speed;
     float moveY = sinf(lastAngle) * pSnake->speed;
 
+    // 1. Flytta huvudet
     if (distance > pSnake->speed)
     {
         pSnake->head->x += moveX;
@@ -141,11 +143,12 @@ void updateSnake(Snake *pSnake, int targetX, int targetY)
     }
     else
     {
-        pSnake->head->x = targetX;
-        pSnake->head->y = targetY;
+        pSnake->head->x = mouseX;
+        pSnake->head->y = mouseY;
     }
-
-    /* — 4. Wrap-around — */
+    pSnake->head->x += moveX;
+    pSnake->head->y += moveY;
+    // WRAP huvudets position
     if (pSnake->head->x < 0)
         pSnake->head->x += pSnake->window_width;
     else if (pSnake->head->x >= pSnake->window_width)
@@ -156,13 +159,15 @@ void updateSnake(Snake *pSnake, int targetX, int targetY)
     else if (pSnake->head->y >= pSnake->window_height)
         pSnake->head->y -= pSnake->window_height;
 
-    /* — 5. Segment- & historik-uppdatering som du hade innan — */
+    // 3. Uppdatera segmenten
     updateSegments(pSnake);
 
+    // 4. Spara huvudets position i historik
     pSnake->historyX[pSnake->historyIndex] = pSnake->head->x;
     pSnake->historyY[pSnake->historyIndex] = pSnake->head->y;
     pSnake->historyIndex = (pSnake->historyIndex + 1) % MAX_HISTORY;
 
+    // 5. Lägg till nytt segment om det är dags
     Uint32 now = SDL_GetTicks();
     if (now - pSnake->lastSegmentTime >= 2000)
     {

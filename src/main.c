@@ -32,6 +32,7 @@ typedef struct
     Snake *snakes[MAX_PLAYERS];
     int playerIndex;
     bool playerIndexSet;
+
     bool soundOn;
 
     Mix_Music *music;
@@ -64,7 +65,6 @@ int main(int argc, char *argv[])
     {
         return 1;
     }
-
     game.soundOn = true;
     runGame(&game);
     cleanGame(&game);
@@ -229,11 +229,11 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
 
     while (isRunning)
     {
-        if (!pGame->snakes[playerIndex] || !isSnakeAlive(pGame->snakes[playerIndex]))
+        if (!pGame->snakes[playerIndex])
         {
-            printf(" Waiting for your snake to be created or revived...\n");
+            printf(" Waiting for your snake to be created...\n");
             SDL_Delay(50); // vänta på att servern skickar snakeinfo
-            continue;      // hoppa över resten av loopen tills ormen finns och är vid liv
+            continue;      // hoppa över resten av loopen tills ormen finns
         }
 
         //  Om ormen finns och lever – skicka dess position
@@ -309,6 +309,7 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
     if (timerTexture)
         SDL_DestroyTexture(timerTexture);
     TTF_CloseFont(font);
+
     printf("[GAME] Game over. Waiting for Server results...\n");
 
     return (GameResult){
@@ -369,6 +370,7 @@ int initSnakeClient(Game *pGame, const char *ipAddress)
 
     if (!pGame->playerIndexSet)
     {
+
         printf(" Could not accept ClientID from server.\n");
         return 0;
     }
@@ -445,7 +447,6 @@ void receiveServerUpdate(Game *pGame)
             {
                 const char *head = "resources/purple_head.png";
                 const char *body = "resources/purple_body.png";
-
                 // Olika färger för olika ormar
                 switch (s->clientID)
                 {
