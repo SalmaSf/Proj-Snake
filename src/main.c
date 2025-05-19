@@ -229,11 +229,11 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
 
     while (isRunning)
     {
-        if (!pGame->snakes[playerIndex])
+        if (!pGame->snakes[playerIndex] || !isSnakeAlive(pGame->snakes[playerIndex]))
         {
-            printf(" Waiting for your snake to be created...\n");
+            printf(" Waiting for your snake to be created or revived...\n");
             SDL_Delay(50); // vänta på att servern skickar snakeinfo
-            continue;      // hoppa över resten av loopen tills ormen finns
+            continue;      // hoppa över resten av loopen tills ormen finns och är vid liv
         }
 
         //  Om ormen finns och lever – skicka dess position

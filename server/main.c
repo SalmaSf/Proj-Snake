@@ -187,7 +187,7 @@ void run(Game *pGame)
                         setSnakePosition(pGame->snakes[i], data->x, data->y);
                     else
                         killSnake(pGame->snakes[i]);
-                    printf("[SNAKE] snake %d dead.\n", i);
+                    printf("[SNAKE] snake %d is %s.\n", i, data->alive ? "alive" : "dead");
                 }
             }
 
@@ -465,6 +465,7 @@ void addClient(IPaddress address, Game *pGame)
         pGame->clients[index].address = address;
         pGame->clients[index].index = index;
         pGame->clients[index].active = true;
+        pGame->clients[index].data.alive = true;
         pGame->numClients++;
 
         int clientID = index;
