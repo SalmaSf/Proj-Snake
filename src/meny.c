@@ -19,7 +19,7 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
 
     if (!background || !startButton || !soundOnIcon || !soundOffIcon || !closeIcon)
     {
-        SDL_Log("Kunde inte ladda menybilder: %s", IMG_GetError());
+        SDL_Log("Could not load menupictures: %s", IMG_GetError());
         if (background)
             SDL_DestroyTexture(background);
         if (startButton)
