@@ -207,7 +207,7 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
     TTF_Font *font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 32);
     if (!font)
     {
-        SDL_Log("Kunde inte ladda font: %s", TTF_GetError());
+        SDL_Log("Could not load font: %s", TTF_GetError());
         SDL_DestroyTexture(background);
         SDL_StopTextInput();
         return false;
@@ -254,7 +254,7 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
                     }
                     else
                     {
-                        SDL_Log("⚠️ Ingen IP-adress inskriven.");
+                        SDL_Log("⚠️ No IP-adress written.");
                     }
                 }
                 else if (event.key.keysym.sym == SDLK_ESCAPE)
@@ -303,7 +303,7 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
         }
         SDL_FreeSurface(textSurface);
     } else {
-        SDL_Log("INFO: Kunde inte rendera text: %s", TTF_GetError());
+        SDL_Log("INFO: Could not render: %s", TTF_GetError());
     }
 }
         SDL_RenderPresent(renderer);
@@ -473,7 +473,7 @@ bool showLobby(SDL_Renderer *renderer)
     return true;
 }
 
-int showResult(SDL_Renderer *renderer, bool vann, float tid)
+int showResult(SDL_Renderer *renderer, bool won, float time)
 {
     // 1. Ladda bakgrund
     SDL_Texture *background = IMG_LoadTexture(renderer, "resources/vann.png");
@@ -498,15 +498,15 @@ int showResult(SDL_Renderer *renderer, bool vann, float tid)
     SDL_Color vit = {255, 255, 255, 255};
 
     // 3. Skapa tidstext
-    char tidText[64];
-    int min = (int)tid / 60;
-    int sek = (int)tid % 60;
-    sprintf(tidText, "Time: %02d:%02d", min, sek);
+    char timeText[64];
+    int min = (int)time / 60;
+    int sek = (int)time % 60;
+    sprintf(timeText, "Time: %02d:%02d", min, sek);
 
-    SDL_Surface *tidSurface = TTF_RenderText_Solid(font, tidText, vit);
-    SDL_Texture *tidTex = SDL_CreateTextureFromSurface(renderer, tidSurface);
-    SDL_Rect tidRect = {325, 330, tidSurface->w, tidSurface->h};
-    SDL_FreeSurface(tidSurface);
+    SDL_Surface *timeSurface = TTF_RenderText_Solid(font, timeText, vit);
+    SDL_Texture *timeTex = SDL_CreateTextureFromSurface(renderer, timeSurface);
+    SDL_Rect tidRect = {325, 330, timeSurface->w, timeSurface->h};
+    SDL_FreeSurface(timeSurface);
 
     // 4. Definiera klickbara områden (matchar bilden)
     SDL_Rect playAgainKnapp = {225, 440, 250, 60};
@@ -534,7 +534,7 @@ int showResult(SDL_Renderer *renderer, bool vann, float tid)
                     my >= quitKnapp.y && my <= quitKnapp.y + quitKnapp.h)
                 {
                     SDL_DestroyTexture(background);
-                    SDL_DestroyTexture(tidTex);
+                    SDL_DestroyTexture(timeTex);
                     TTF_CloseFont(font);
                     return 0; // QUIT
                 }
@@ -544,7 +544,7 @@ int showResult(SDL_Renderer *renderer, bool vann, float tid)
                     my >= playAgainKnapp.y && my <= playAgainKnapp.y + playAgainKnapp.h)
                 {
                     SDL_DestroyTexture(background);
-                    SDL_DestroyTexture(tidTex);
+                    SDL_DestroyTexture(timeTex);
                     TTF_CloseFont(font);
                     return 1; // PLAY AGAIN
                 }
@@ -561,14 +561,14 @@ int showResult(SDL_Renderer *renderer, bool vann, float tid)
         // Rendera
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, background, NULL, NULL);
-        SDL_RenderCopy(renderer, tidTex, NULL, &tidRect);
+        SDL_RenderCopy(renderer, timeTex, NULL, &tidRect);
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
 
     // Städning
     SDL_DestroyTexture(background);
-    SDL_DestroyTexture(tidTex);
+    SDL_DestroyTexture(timeTex);
     TTF_CloseFont(font);
 
     return 0;
