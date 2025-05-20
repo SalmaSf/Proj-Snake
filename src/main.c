@@ -41,6 +41,7 @@ typedef struct
     TTF_Font *font;
 
     GameState state;
+    ServerData serverData; //testar
 
     UDPsocket udpSocket;
     IPaddress serverAddr;
@@ -55,7 +56,7 @@ int initSnakeClient(Game *pGame, const char *ipAddress);
 void sendSnakePosition(Game *pGame, int x, int y);
 void receiveServerUpdate(Game *pGame);
 void closeSnakeClient(Game *pGame);
-GameResult gameLoop(Snake *snakes[], SDL_Renderer *pRenderer, SDL_Texture *pBackground, int playerIndex, Game *pGame);
+GameResult gameLoop(Snake *snakes[], SDL_Renderer *pRenderer, SDL_Texture  *pBackground, Game *pGame); //testar
 
 int main(int argc, char *argv[])
 {
@@ -200,7 +201,8 @@ void runGame(Game *pGame)
             pGame->snakes[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");
 
             // 6. Starta spelet
-            GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame->playerIndex, pGame);
+            GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame); //testar
+            //GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame->playerIndex, pGame);
             int val = visaResultatskarm(pGame->pRenderer, result.win, result.time);
             if (val == 0)
                 playAgain = false;
@@ -208,7 +210,107 @@ void runGame(Game *pGame)
     }
 }
 
-GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *background, int playerIndex, Game *pGame)
+GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture  *background, Game *pGame)          //Testar    /* ← playerIndex tas från pGame   */
+{
+    int  myID = pGame->playerIndex;      /* vilken orm är jag?            */
+    bool isRunning = true;
+    SDL_Event ev;
+
+    Uint64 startTime = SDL_GetTicks64();
+    int     gameTime = -1;
+
+    /* --- timer-text --- */
+    TTF_Font  *font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 24);
+    SDL_Color  txtColor = {255,255,255,255};
+    SDL_Texture *timerTex = NULL;
+    SDL_Rect     timerRect;
+
+    /* ------------------ huvud-loop ------------------ */
+    while (isRunning)
+    {
+        /* 1. Ta emot senaste paketet från servern */
+        receiveServerUpdate(pGame);           /* fyller pGame->serverData       */
+        if (pGame->state == GAME_OVER)
+            isRunning = false;
+
+        /* 2. Event/quit                                 */
+        while (SDL_PollEvent(&ev)) {
+            if (ev.type == SDL_QUIT ||
+               (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE))
+                isRunning = false;
+        }
+
+        /* 3. Vänta tills min orm faktiskt finns         */
+        if (!pGame->snakes[myID]) {
+            SDL_Delay(50);
+            continue;
+        }
+
+        /* 4. Läs musen EN gång                          */
+        int mx, my;
+        SDL_GetMouseState(&mx, &my);
+
+        /* 5. Uppdatera alla levande ormar               */
+        for (int i = 0; i < MAX_PLAYERS; ++i) {
+            if (!snakes[i] || !isSnakeAlive(snakes[i])) continue;
+
+            if (i == myID) {
+                /* min egen orm → musposition            */
+                updateSnake(snakes[i], true, 50, 50); // skippa myID
+            } else {
+                /* fjärr-orm → koordinater från servern  */
+                SnakeInfo *si = &pGame->serverData.snakes[i];
+                updateSnake(snakes[i], false, si->x, si->y);
+                if (!si->alive) killSnake(snakes[i]);
+            }
+        }
+
+        /* 6. Skicka MIN nya position till servern       */
+        int headX = getSnakeHeadX(snakes[myID]);
+        int headY = getSnakeHeadY(snakes[myID]);
+        sendSnakePosition(pGame, headX, headY); //Skicka "get mouse state" Ulrika tips, skicka mus data och inte vart huvudet är
+ 
+        /* 7. Uppdatera timer-text                       */
+        int curTime = (SDL_GetTicks64() - startTime) / 1000;
+        if (curTime > gameTime) {
+            gameTime = curTime;
+            if (timerTex) SDL_DestroyTexture(timerTex);
+
+            char buf[32];
+            sprintf(buf, "%02d:%02d", gameTime/60, gameTime%60);
+            SDL_Surface *surf = TTF_RenderText_Solid(font, buf, txtColor);
+            timerTex  = SDL_CreateTextureFromSurface(renderer, surf);
+            timerRect = (SDL_Rect){10,10, surf->w, surf->h};
+            SDL_FreeSurface(surf);
+        }
+
+        /* 8. Render                                     */
+        SDL_SetRenderDrawColor(renderer, 0,0,0,255);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, background, NULL, NULL);
+
+        for (int i = 0; i < MAX_PLAYERS; ++i)
+            if (snakes[i] && isSnakeAlive(snakes[i]))
+                drawSnake(snakes[i]);
+
+        if (timerTex)
+            SDL_RenderCopy(renderer, timerTex, NULL, &timerRect);
+
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16);                         /* ≈60 fps                       */
+    }
+
+    /* ---------- städa upp ---------- */
+    if (timerTex) SDL_DestroyTexture(timerTex);
+    TTF_CloseFont(font);
+
+    return (GameResult){
+        .win  = isSnakeAlive(snakes[myID]),
+        .time = (float)gameTime
+    };
+}
+
+/*GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *background, int playerIndex, Game *pGame)
 {
     bool isRunning = true;
     SDL_Event event;
@@ -315,7 +417,7 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *backgr
     return (GameResult){
         .win = isSnakeAlive(snakes[playerIndex]),
         .time = (float)gameTime};
-}
+}*/
 
 int initSnakeClient(Game *pGame, const char *ipAddress)
 {
@@ -408,6 +510,7 @@ void receiveServerUpdate(Game *pGame)
 
         ServerData serverData;
         memcpy(&serverData, pGame->packet->data, sizeof(ServerData));
+        pGame->serverData = serverData;   
         printf(" ServerData.numPlayers = %d\n", serverData.numPlayers);
 
         pGame->state = serverData.state;

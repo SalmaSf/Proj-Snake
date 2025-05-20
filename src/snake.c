@@ -113,68 +113,137 @@ void updateSegments(Snake *pSnake)
     }
 }
 
-void updateSnake(Snake *pSnake)
+// void updateSnake(Snake *pSnake)
+void updateSnake(Snake *s, bool isLocalPlayer, int targetX, int targetY) // testar
 {
     int mouseX, mouseY;
-    SDL_GetMouseState(&mouseX, &mouseY);
 
-    static float lastAngle = 0.0f;
-    float dx = mouseX - pSnake->head->x;
-    float dy = mouseY - pSnake->head->y;
+    if (isLocalPlayer)
+    {
+        /* Din egen orm – styr med musen */
+        SDL_GetMouseState(&mouseX, &mouseY);
+    }
+    else
+    {
+        /* Fjärr-orm – styr med koordinater du fick från servern */
+        mouseX = targetX;
+        mouseY = targetY;
+    }
 
-    pSnake->headRectAngle = atan2f(dy, dx) * 180.0f / M_PI;
+    static float lastAngle = 0.0f; /* bevaras per orm */
+    float dx = mouseX - s->head->x;
+    float dy = mouseY - s->head->y;
 
-    if (mouseX >= 0 && mouseX <= pSnake->window_width &&
-        mouseY >= 0 && mouseY <= pSnake->window_height)
+    s->headRectAngle = atan2f(dy, dx) * 180.0f / M_PI;
+    if (mouseX >= 0 && mouseX <= s->window_width &&
+        mouseY >= 0 && mouseY <= s->window_height)
     {
         lastAngle = atan2f(dy, dx);
     }
 
     float distance = sqrtf(dx * dx + dy * dy);
+    float moveX = cosf(lastAngle) * s->speed;
+    float moveY = sinf(lastAngle) * s->speed;
 
-    float moveX = cosf(lastAngle) * pSnake->speed;
-    float moveY = sinf(lastAngle) * pSnake->speed;
-
-    // 1. Flytta huvudet
-    if (distance > pSnake->speed)
+    /* flytta huvudet */
+    if (distance > s->speed)
     {
-        pSnake->head->x += moveX;
-        pSnake->head->y += moveY;
+        s->head->x += moveX;
+        s->head->y += moveY;
     }
     else
     {
-        pSnake->head->x = mouseX;
-        pSnake->head->y = mouseY;
+        s->head->x = mouseX;
+        s->head->y = mouseY;
     }
-    pSnake->head->x += moveX;
-    pSnake->head->y += moveY;
-    // WRAP huvudets position
-    if (pSnake->head->x < 0)
-        pSnake->head->x += pSnake->window_width;
-    else if (pSnake->head->x >= pSnake->window_width)
-        pSnake->head->x -= pSnake->window_width;
+    s->head->x += moveX; /* dubbla steget som i din originalkod */
+    s->head->y += moveY;
 
-    if (pSnake->head->y < 0)
-        pSnake->head->y += pSnake->window_height;
-    else if (pSnake->head->y >= pSnake->window_height)
-        pSnake->head->y -= pSnake->window_height;
+    /* --------- WRAP --------- */
+    if (s->head->x < 0)
+        s->head->x += s->window_width;
+    else if (s->head->x >= s->window_width)
+        s->head->x -= s->window_width;
 
-    // 3. Uppdatera segmenten
-    updateSegments(pSnake);
+    if (s->head->y < 0)
+        s->head->y += s->window_height;
+    else if (s->head->y >= s->window_height)
+        s->head->y -= s->window_height;
 
-    // 4. Spara huvudets position i historik
-    pSnake->historyX[pSnake->historyIndex] = pSnake->head->x;
-    pSnake->historyY[pSnake->historyIndex] = pSnake->head->y;
-    pSnake->historyIndex = (pSnake->historyIndex + 1) % MAX_HISTORY;
+    updateSegments(s);
 
-    // 5. Lägg till nytt segment om det är dags
+    s->historyX[s->historyIndex] = s->head->x;
+    s->historyY[s->historyIndex] = s->head->y;
+    s->historyIndex = (s->historyIndex + 1) % MAX_HISTORY;
+
     Uint32 now = SDL_GetTicks();
-    if (now - pSnake->lastSegmentTime >= 2000)
+    if (now - s->lastSegmentTime >= 2000)
     {
-        addSegment(pSnake);
-        pSnake->lastSegmentTime = now;
+        addSegment(s);
+        s->lastSegmentTime = now;
     }
 }
+
+/*int mouseX, mouseY;
+SDL_GetMouseState(&mouseX, &mouseY);
+
+static float lastAngle = 0.0f;
+float dx = mouseX - pSnake->head->x;
+float dy = mouseY - pSnake->head->y;
+
+pSnake->headRectAngle = atan2f(dy, dx) * 180.0f / M_PI;
+
+if (mouseX >= 0 && mouseX <= pSnake->window_width &&
+    mouseY >= 0 && mouseY <= pSnake->window_height)
+{
+    lastAngle = atan2f(dy, dx);
+}
+
+float distance = sqrtf(dx * dx + dy * dy);
+
+float moveX = cosf(lastAngle) * pSnake->speed;
+float moveY = sinf(lastAngle) * pSnake->speed;
+
+// 1. Flytta huvudet
+if (distance > pSnake->speed)
+{
+    pSnake->head->x += moveX;
+    pSnake->head->y += moveY;
+}
+else
+{
+    pSnake->head->x = mouseX;
+    pSnake->head->y = mouseY;
+}
+pSnake->head->x += moveX;
+pSnake->head->y += moveY;
+// WRAP huvudets position
+if (pSnake->head->x < 0)
+    pSnake->head->x += pSnake->window_width;
+else if (pSnake->head->x >= pSnake->window_width)
+    pSnake->head->x -= pSnake->window_width;
+
+if (pSnake->head->y < 0)
+    pSnake->head->y += pSnake->window_height;
+else if (pSnake->head->y >= pSnake->window_height)
+    pSnake->head->y -= pSnake->window_height;
+
+// 3. Uppdatera segmenten
+updateSegments(pSnake);
+
+// 4. Spara huvudets position i historik
+pSnake->historyX[pSnake->historyIndex] = pSnake->head->x;
+pSnake->historyY[pSnake->historyIndex] = pSnake->head->y;
+pSnake->historyIndex = (pSnake->historyIndex + 1) % MAX_HISTORY;
+
+// 5. Lägg till nytt segment om det är dags
+Uint32 now = SDL_GetTicks();
+if (now - pSnake->lastSegmentTime >= 2000)
+{
+    addSegment(pSnake);
+    pSnake->lastSegmentTime = now;
+}
+}*/
 
 bool checkCollision(Snake *attacker, Snake *target)
 {
