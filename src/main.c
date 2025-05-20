@@ -132,14 +132,14 @@ void runGame(Game *pGame)
 
     while (programRunning)
     {
-        if (!visaStartMeny(pGame->pRenderer, &pGame->soundOn))
+        if (!showStartMenu(pGame->pRenderer, &pGame->soundOn))
             break;
 
         bool playAgain = true;
         while (playAgain)
         {
             // 1. IP-meny
-            if (!visaIPMeny(pGame->pRenderer, ipBuffer, sizeof(ipBuffer)))
+            if (!showIPMenu(pGame->pRenderer, ipBuffer, sizeof(ipBuffer)))
                 break;
 
             if (strlen(ipBuffer) > 0)
@@ -177,7 +177,7 @@ void runGame(Game *pGame)
                     break;
                 }
 
-                if (!visaLobby(pGame->pRenderer)) // ESC eller avbryt
+                if (!showLobby(pGame->pRenderer)) // ESC eller avbryt
                 {
                     playAgain = false;
                     inLobby = false;
@@ -201,7 +201,7 @@ void runGame(Game *pGame)
 
             // 6. Starta spelet
             GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame->playerIndex, pGame);
-            int val = visaResultatskarm(pGame->pRenderer, result.win, result.time);
+            int val = showResult(pGame->pRenderer, result.win, result.time);
             if (val == 0)
                 playAgain = false;
         }
