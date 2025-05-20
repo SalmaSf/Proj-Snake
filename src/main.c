@@ -203,7 +203,7 @@ void runGame(Game *pGame)
             // 6. Starta spelet
             GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame); //testar
             //GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame->playerIndex, pGame);
-            int val = visaResultatskarm(pGame->pRenderer, result.win, result.time);
+            int val = showResult(pGame->pRenderer, result.win, result.time);
             if (val == 0)
                 playAgain = false;
         }
@@ -546,7 +546,7 @@ void receiveServerUpdate(Game *pGame)
             printf(" Updating snake %d: position (%d, %d), alive: %d\n", s->clientID, s->x, s->y, s->alive);
 
             //  Skapa ormen om den inte redan finns och är alive
-            if (s->alive && pGame->snakes[s->clientID] == NULL)
+            /*if (s->alive && pGame->snakes[s->clientID] == NULL)
             {
                 const char *head = "resources/purple_head.png";
                 const char *body = "resources/purple_body.png";
@@ -573,7 +573,7 @@ void receiveServerUpdate(Game *pGame)
 
                 pGame->snakes[s->clientID] = createSnake(s->x, s->y, pGame->pRenderer, 800, 700, head, body);
                 printf("Created snake %d on (%d, %d)\n", s->clientID, s->x, s->y);
-            }
+            }*/
 
             //  Kontroll så vi inte försöker uppdatera NULL
             if (pGame->snakes[s->clientID])
