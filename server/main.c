@@ -492,19 +492,19 @@
             {
             case 0:
                 pGame->snakes[index] = createSnake(400, 0, pGame->renderer, 800, 700, "resources/purple_head.png", "resources/purple_body.png");
-                pGame->sData.snakes[index].alive = 1;
+                pGame->sData.snakes[index].alive = true;
                 break;
             case 1:
                 pGame->snakes[index] = createSnake(400, 700, pGame->renderer, 800, 700, "resources/yellow_head.png", "resources/yellow_body.png");
-                pGame->sData.snakes[index].alive = 1;
+                pGame->sData.snakes[index].alive = true;
                 break;
             case 2:
                 pGame->snakes[index] = createSnake(0, 350, pGame->renderer, 800, 700, "resources/green_head.png", "resources/green_body.png");
-                pGame->sData.snakes[index].alive = 1;
+                pGame->sData.snakes[index].alive = true;
                 break;
             case 3:
                 pGame->snakes[index] = createSnake(800, 350, pGame->renderer, 800, 700, "resources/pink_head.png", "resources/pink_body.png");
-                pGame->sData.snakes[index].alive = 1;
+                pGame->sData.snakes[index].alive = true;
                 break;
             default:
                 printf(" Invalid snakeindex %d\n", index);

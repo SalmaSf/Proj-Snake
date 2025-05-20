@@ -29,21 +29,28 @@ struct snake
     int historyIndex;
     Uint32 lastSegmentTime;
     bool isAlive;
+    float netX, netY;
 };
 
 Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height, const char *headTexturePath, const char *segmentTexturePath)
 {
     Snake *pSnake = malloc(sizeof(Snake));
+    if(!pSnake) return NULL;
+
     pSnake->head = malloc(sizeof(Segment));
+
     pSnake->head->x = x;
     pSnake->head->y = y;
     pSnake->head->next = NULL;
+
     pSnake->pRenderer = pRenderer;
     pSnake->speed = 3.0f;
 
     pSnake->historyIndex = 0;
-
     pSnake->isAlive = true;
+
+    pSnake->netX = (float)x;
+    pSnake->netY = (float)y;
 
     SDL_Surface *pSurface = IMG_Load(headTexturePath);
     if (!pSurface)

@@ -59,5 +59,6 @@
   "C_Cpp.errorSquiggles": "disabled",
   "files.associations": {
     "stdbool.h": "c"
-  }
+  },
+  "makefile.configureOnOpen": false
 }

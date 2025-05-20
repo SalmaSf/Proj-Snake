@@ -494,7 +494,7 @@ void sendSnakePosition(Game *pGame, int x, int y)
     if (pGame->snakes[pGame->playerIndex])
         data.alive = isSnakeAlive(pGame->snakes[pGame->playerIndex]);
     else
-        data.alive = true;
+        data.alive = true; // weird
     data.state = pGame->state;
 
     memcpy(pGame->packet->data, &data, sizeof(ClientData));
@@ -576,7 +576,7 @@ void receiveServerUpdate(Game *pGame)
             }*/
 
             //  Kontroll så vi inte försöker uppdatera NULL
-            if (pGame->snakes[s->clientID])
+            /*if (pGame->snakes[s->clientID])
             {
                 if (s->alive)
                     setSnakePosition(pGame->snakes[s->clientID], s->x, s->y);
@@ -586,7 +586,7 @@ void receiveServerUpdate(Game *pGame)
             else
             {
                 printf(" pGame->snakes[%d] is NULL, can not update position.\n", s->clientID);
-            }
+            }*/
         }
     }
 }
