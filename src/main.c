@@ -11,7 +11,6 @@
 #include "meny.h"
 #include "snake_data.h"
 
-// #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 2000
 
 const int WINDOW_WIDTH = 800;
@@ -202,7 +201,6 @@ void runGame(Game *pGame)
 
             // 6. Starta spelet
             GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame); //testar
-            //GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame->playerIndex, pGame);
             int val = showResult(pGame->pRenderer, result.win, result.time);
             if (val == 0)
                 playAgain = false;
@@ -310,115 +308,6 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture  *backg
     };
 }
 
-/*GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *background, int playerIndex, Game *pGame)
-{
-    bool isRunning = true;
-    SDL_Event event;
-    Uint64 startTime = SDL_GetTicks64();
-    int gameTime = -1;
-
-    TTF_Font *font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 24);
-    if (!font)
-    {
-        printf("Error loading font: %s\n", TTF_GetError());
-        return (GameResult){false, 0.0f};
-    }
-    printf("Game loop started\n"); // Debugging här
-
-    SDL_Color textColor = {255, 255, 255, 255};
-    SDL_Texture *timerTexture = NULL;
-    SDL_Rect timerRect;
-
-    while (isRunning)
-    {
-        if (!pGame->snakes[playerIndex])
-        {
-            printf(" Waiting for your snake to be created...\n");
-            SDL_Delay(50); // vänta på att servern skickar snakeinfo
-            continue;      // hoppa över resten av loopen tills ormen finns
-        }
-
-        //  Om ormen finns och lever – skicka dess position
-        if (isSnakeAlive(pGame->snakes[playerIndex]))
-        {
-            int x = getSnakeHeadX(pGame->snakes[playerIndex]);
-            int y = getSnakeHeadY(pGame->snakes[playerIndex]);
-            printf("Player %d snake position: (%d, %d)\n", playerIndex, x, y);
-            sendSnakePosition(pGame, x, y);
-        }
-
-        receiveServerUpdate(pGame);
-
-        if (pGame->state == GAME_OVER)
-            isRunning = false;
-
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT ||
-                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE))
-                isRunning = false;
-        }
-
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (isSnakeAlive(snakes[i]))
-            {
-                updateSnake(snakes[i]);
-                // printf("Snake %d updated\n", i);  // Debugging här
-            }
-        }
-
-        int currentTime = (SDL_GetTicks64() - startTime) / 1000;
-        if (currentTime > gameTime)
-        {
-            gameTime = currentTime;
-
-            if (timerTexture)
-                SDL_DestroyTexture(timerTexture);
-
-            char text[32];
-            sprintf(text, "%02d:%02d", gameTime / 60, gameTime % 60);
-            SDL_Surface *surface = TTF_RenderText_Solid(font, text, textColor);
-            timerTexture = SDL_CreateTextureFromSurface(renderer, surface);
-            timerRect.x = 10;
-            timerRect.y = 10;
-            timerRect.w = surface->w;
-            timerRect.h = surface->h;
-            SDL_FreeSurface(surface);
-        }
-
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, background, NULL, NULL);
-
-        for (int i = 0; i < MAX_PLAYERS; i++)
-        {
-            if (isSnakeAlive(snakes[i]))
-            {
-                drawSnake(snakes[i]);
-            }
-        }
-
-        if (timerTexture)
-        {
-            SDL_RenderCopy(renderer, timerTexture, NULL, &timerRect);
-        }
-
-        SDL_RenderPresent(renderer);
-        SDL_Delay(16);
-    }
-
-    if (timerTexture)
-        SDL_DestroyTexture(timerTexture);
-    TTF_CloseFont(font);
-
-    printf("[GAME] Game over. Waiting for Server results...\n");
-
-    return (GameResult){
-        .win = isSnakeAlive(snakes[playerIndex]),
-        .time = (float)gameTime};
-}*/
-
 int initSnakeClient(Game *pGame, const char *ipAddress)
 {
     if (SDLNet_Init() < 0)
@@ -476,8 +365,6 @@ int initSnakeClient(Game *pGame, const char *ipAddress)
         printf(" Could not accept ClientID from server.\n");
         return 0;
     }
-    // pGame->packet->address.host = pGame->serverAddr.host;
-    // pGame->packet->address.port = pGame->serverAddr.port;
 
     return 1;
 }
@@ -532,61 +419,12 @@ void receiveServerUpdate(Game *pGame)
         }
         printf("Received server data: state = %d, num players = %d\n", pGame->state, serverData.numPlayers); // Debugging här
         printf("Num players in serverData: %d\n", serverData.numPlayers);
-        /*for (int i = 0; i < serverData.numPlayers; i++)
-        {
-            SnakeInfo *s = &serverData.snakes[i];
-            setSnakePosition(pGame->snakes[s->clientID], s->x, s->y);
-            if (!s->alive)
-                killSnake(pGame->snakes[s->clientID]);
-        }*/
 
         for (int i = 0; i < serverData.numPlayers; i++)
         {
             SnakeInfo *s = &serverData.snakes[i];
             printf(" Updating snake %d: position (%d, %d), alive: %d\n", s->clientID, s->x, s->y, s->alive);
 
-            //  Skapa ormen om den inte redan finns och är alive
-            /*if (s->alive && pGame->snakes[s->clientID] == NULL)
-            {
-                const char *head = "resources/purple_head.png";
-                const char *body = "resources/purple_body.png";
-                // Olika färger för olika ormar
-                switch (s->clientID)
-                {
-                case 0:
-                    head = "resources/purple_head.png";
-                    body = "resources/purple_body.png";
-                    break;
-                case 1:
-                    head = "resources/yellow_head.png";
-                    body = "resources/yellow_body.png";
-                    break;
-                case 2:
-                    head = "resources/green_head.png";
-                    body = "resources/green_body.png";
-                    break;
-                case 3:
-                    head = "resources/pink_head.png";
-                    body = "resources/pink_body.png";
-                    break;
-                }
-
-                pGame->snakes[s->clientID] = createSnake(s->x, s->y, pGame->pRenderer, 800, 700, head, body);
-                printf("Created snake %d on (%d, %d)\n", s->clientID, s->x, s->y);
-            }*/
-
-            //  Kontroll så vi inte försöker uppdatera NULL
-            /*if (pGame->snakes[s->clientID])
-            {
-                if (s->alive)
-                    setSnakePosition(pGame->snakes[s->clientID], s->x, s->y);
-                else
-                    killSnake(pGame->snakes[s->clientID]);
-            }
-            else
-            {
-                printf(" pGame->snakes[%d] is NULL, can not update position.\n", s->clientID);
-            }*/
         }
     }
 }

@@ -319,53 +319,6 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
     return true;
 }
 
-/*bool visaIPMeny(SDL_Renderer* renderer)
-{
-    SDL_Texture* bakgrund = IMG_LoadTexture(renderer, "resources/ip_meny_bakgrund.png");
-    if (!bakgrund) {
-        SDL_Log("Kunde inte ladda ip_meny_bakgrund.png: %s", IMG_GetError());
-        return false;
-    }
-
-    // Definiera rektangeln – centrera + flytta ner lite (ca 10-15 pixlar)
-    SDL_Rect inputBox = { 0, 0, 400, 60 };
-    inputBox.x = (800 - inputBox.w) / 2;   // centrerad horisontellt
-    inputBox.y = (700 - inputBox.h) / 2 + 15;  // lite ner från mitten (15 pixlar ner)
-
-    bool isRunning = true;
-    SDL_Event event;
-
-    while (isRunning)
-    {
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT ||
-                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) ||
-                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN))
-            {
-                isRunning = false;  // Stäng sidan med ESC eller ENTER
-            }
-        }
-
-        SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, bakgrund, NULL, NULL);
-
-        // Rita vit ruta (inputBox)
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);  // vit fyllning
-        SDL_RenderFillRect(renderer, &inputBox);
-
-        // Svart kant runt rutan
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);  // svart kant
-        SDL_RenderDrawRect(renderer, &inputBox);
-
-        SDL_RenderPresent(renderer);
-        SDL_Delay(16); // ca 60 FPS
-    }
-
-    SDL_DestroyTexture(bakgrund);
-    return true;
-}*/
-
 bool showLobby(SDL_Renderer *renderer)
 {
     SDL_Texture *lobbyBackground = IMG_LoadTexture(renderer, "resources/lobby.png");
