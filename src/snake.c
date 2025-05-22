@@ -35,7 +35,8 @@ struct snake
 Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height, const char *headTexturePath, const char *segmentTexturePath)
 {
     Snake *pSnake = malloc(sizeof(Snake));
-    if(!pSnake) return NULL;
+    if (!pSnake)
+        return NULL;
 
     pSnake->head = malloc(sizeof(Segment));
 
@@ -125,17 +126,9 @@ void updateSnake(Snake *s, bool isLocalPlayer, int targetX, int targetY) // test
 {
     int mouseX, mouseY;
 
-    if (isLocalPlayer)
-    {
-        /* Din egen orm – styr med musen */
-        SDL_GetMouseState(&mouseX, &mouseY);
-    }
-    else
-    {
-        /* Fjärr-orm – styr med koordinater du fick från servern */
-        mouseX = targetX;
-        mouseY = targetY;
-    }
+    /* Fjärr-orm – styr med koordinater du fick från servern */
+    mouseX = targetX;
+    mouseY = targetY;
 
     static float lastAngle = 0.0f; /* bevaras per orm */
     float dx = mouseX - s->head->x;
@@ -190,7 +183,6 @@ void updateSnake(Snake *s, bool isLocalPlayer, int targetX, int targetY) // test
         s->lastSegmentTime = now;
     }
 }
-
 
 bool checkCollision(Snake *attacker, Snake *target)
 {

@@ -137,7 +137,7 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
                     mx >= howToPlayRect.x && mx <= howToPlayRect.x + howToPlayRect.w &&
                     my >= howToPlayRect.y && my <= howToPlayRect.y + howToPlayRect.h)
                 {
-                    showInstructions(renderer); //här!!
+                    showInstructions(renderer); // här!!
                 }
 
                 // Återställ visuellt
@@ -287,25 +287,29 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderDrawRect(renderer, &inputBox);
 
-        if (strlen(ipInput) > 0 && SDL_IsTextInputActive()) {
-    SDL_Surface *textSurface = TTF_RenderText_Solid(font, ipInput, svart);
-    if (textSurface) {
-        SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-        if (textTexture) {
-            SDL_Rect textRect = {
-                inputBox.x + 10,
-                inputBox.y + (inputBox.h - textSurface->h) / 2,
-                textSurface->w,
-                textSurface->h
-            };
-            SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
-            SDL_DestroyTexture(textTexture);
+        if (strlen(ipInput) > 0 && SDL_IsTextInputActive())
+        {
+            SDL_Surface *textSurface = TTF_RenderText_Solid(font, ipInput, svart);
+            if (textSurface)
+            {
+                SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+                if (textTexture)
+                {
+                    SDL_Rect textRect = {
+                        inputBox.x + 10,
+                        inputBox.y + (inputBox.h - textSurface->h) / 2,
+                        textSurface->w,
+                        textSurface->h};
+                    SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+                    SDL_DestroyTexture(textTexture);
+                }
+                SDL_FreeSurface(textSurface);
+            }
+            else
+            {
+                SDL_Log("INFO: Could not render: %s", TTF_GetError());
+            }
         }
-        SDL_FreeSurface(textSurface);
-    } else {
-        SDL_Log("INFO: Could not render: %s", TTF_GetError());
-    }
-}
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
@@ -344,78 +348,75 @@ bool showLobby(SDL_Renderer *renderer)
     bool isRunning = true;
     SDL_Event event;
 
-    const int visaLobbyTidMS = 5000;
-    Uint32 startTime = SDL_GetTicks();
+    /* const int visaLobbyTidMS = 5000;
+     Uint32 startTime = SDL_GetTicks();*/
 
     SDL_Rect backgroundRect = {0, 0, 800, 700};
 
     // Positioner för varje orm (stora huvuden: 170x170)
-    SDL_Rect pinkRect = {15, 15, 170, 170};   // Vänster upp
-    SDL_Rect yellowRect = {615, 15, 170, 170};   // Höger upp
-    SDL_Rect greenRect = {15, 515, 170, 170};  // Vänster ner
+    SDL_Rect pinkRect = {15, 15, 170, 170};     // Vänster upp
+    SDL_Rect yellowRect = {615, 15, 170, 170};  // Höger upp
+    SDL_Rect greenRect = {15, 515, 170, 170};   // Vänster ner
     SDL_Rect purpleRect = {615, 515, 170, 170}; // Höger ner
 
-    while (isRunning)
+    while (SDL_PollEvent(&event))
     {
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT)
-            {
-                isRunning = false;
-                break;
-            }
-        }
-
-        Uint32 elapsedTime = SDL_GetTicks() - startTime;
-        if (elapsedTime >= visaLobbyTidMS)
+        if (event.type == SDL_QUIT)
         {
             isRunning = false;
+            break;
         }
-
-        SDL_RenderClear(renderer);
-
-        // Rita stillastående bakgrund
-        SDL_RenderCopy(renderer, lobbyBackground, NULL, &backgroundRect);
-
-        // Rita ormar
-        SDL_RenderCopy(renderer, snakePink, NULL, &pinkRect);
-        SDL_RenderCopy(renderer, snakeYellow, NULL, &yellowRect);
-        SDL_RenderCopy(renderer, snakeGreen, NULL, &greenRect);
-        SDL_RenderCopy(renderer, snakePurple, NULL, &purpleRect);
-
-        // Tunga-animering (blinkar var 300 ms)
-        bool showTongue = ((SDL_GetTicks() / 300) % 2 == 0);
-        if (showTongue)
-        {
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-
-            // Rita tungor
-            SDL_Rect tonguePink = {
-                pinkRect.x + pinkRect.w / 2 - 3,
-                pinkRect.y + pinkRect.h - 5,
-                6, 10};
-            SDL_Rect toungeYellow = {
-                yellowRect.x + yellowRect.w / 2 - 3,
-                yellowRect.y + yellowRect.h - 5,
-                6, 10};
-            SDL_Rect toungeGreen = {
-                greenRect.x + greenRect.w / 2 - 3,
-                greenRect.y + greenRect.h - 5,
-                6, 10};
-            SDL_Rect toungePurple = {
-                purpleRect.x + purpleRect.w / 2 - 3,
-                purpleRect.y + purpleRect.h - 5,
-                6, 10};
-
-            SDL_RenderFillRect(renderer, &tonguePink);
-            SDL_RenderFillRect(renderer, &toungeYellow);
-            SDL_RenderFillRect(renderer, &toungeGreen);
-            SDL_RenderFillRect(renderer, &toungePurple);
-        }
-
-        SDL_RenderPresent(renderer);
-        SDL_Delay(16); // ca 60 FPS
     }
+
+    /*Uint32 elapsedTime = SDL_GetTicks() - startTime;
+    if (elapsedTime >= visaLobbyTidMS)
+    {
+        isRunning = false;
+    }*/
+
+    SDL_RenderClear(renderer);
+
+    // Rita stillastående bakgrund
+    SDL_RenderCopy(renderer, lobbyBackground, NULL, &backgroundRect);
+
+    // Rita ormar
+    SDL_RenderCopy(renderer, snakePink, NULL, &pinkRect);
+    SDL_RenderCopy(renderer, snakeYellow, NULL, &yellowRect);
+    SDL_RenderCopy(renderer, snakeGreen, NULL, &greenRect);
+    SDL_RenderCopy(renderer, snakePurple, NULL, &purpleRect);
+
+    // Tunga-animering (blinkar var 300 ms)
+    bool showTongue = ((SDL_GetTicks() / 300) % 2 == 0);
+    if (showTongue)
+    {
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+        // Rita tungor
+        SDL_Rect tonguePink = {
+            pinkRect.x + pinkRect.w / 2 - 3,
+            pinkRect.y + pinkRect.h - 5,
+            6, 10};
+        SDL_Rect toungeYellow = {
+            yellowRect.x + yellowRect.w / 2 - 3,
+            yellowRect.y + yellowRect.h - 5,
+            6, 10};
+        SDL_Rect toungeGreen = {
+            greenRect.x + greenRect.w / 2 - 3,
+            greenRect.y + greenRect.h - 5,
+            6, 10};
+        SDL_Rect toungePurple = {
+            purpleRect.x + purpleRect.w / 2 - 3,
+            purpleRect.y + purpleRect.h - 5,
+            6, 10};
+
+        SDL_RenderFillRect(renderer, &tonguePink);
+        SDL_RenderFillRect(renderer, &toungeYellow);
+        SDL_RenderFillRect(renderer, &toungeGreen);
+        SDL_RenderFillRect(renderer, &toungePurple);
+    }
+
+    SDL_RenderPresent(renderer);
+    SDL_Delay(16); // ca 60 FPS
 
     SDL_DestroyTexture(lobbyBackground);
     SDL_DestroyTexture(snakePink);

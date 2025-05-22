@@ -254,7 +254,7 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture  *backg
 
             if (i == myID) {
                 /* min egen orm → musposition            */
-                updateSnake(snakes[i], true, 50, 50); // skippa myID
+                updateSnake(snakes[i], true, mx, my); // skippa myID
             } else {
                 /* fjärr-orm → koordinater från servern  */
                 SnakeInfo *si = &pGame->serverData.snakes[i];
