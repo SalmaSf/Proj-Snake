@@ -203,7 +203,6 @@ void runGame(Game *pGame)
 // Endast visa vinnarbild om spelaren vann (dvs sista som lever)
             if (result.win) {
                 int choice = showResult(pGame->pRenderer, true, result.time);
-                if (choice == 0);
             }
         } //Såå
     }
