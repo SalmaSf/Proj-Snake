@@ -205,7 +205,7 @@ void runGame(Game *pGame)
                 int choice = showResult(pGame->pRenderer, true, result.time);
                 if (choice == 0);
             }
-        }
+        } //Såå
     }
 }
 
