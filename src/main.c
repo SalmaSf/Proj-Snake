@@ -171,14 +171,13 @@ void runGame(Game *pGame)
             {
                 receiveServerUpdate(pGame); // Få state från server
 
-                if (pGame->state == ONGOING)
+                if (pGame->state == ONGOING || pGame->serverData.numPlayers >= 4)
                 {
-                    printf("[LOBBY] Game starting!\n");
                     inLobby = false;
                     break;
                 }
 
-                if (!showLobby(pGame->pRenderer)) // ESC eller avbryt
+                if (!showLobby(pGame->pRenderer, pGame->serverData.numPlayers)) // ESC eller avbryt
                 {
                     playAgain = false;
                     inLobby = false;
@@ -201,11 +200,15 @@ void runGame(Game *pGame)
             pGame->snakes[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");
 
             // 6. Starta spelet
-            GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame); //testar
-            //GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame->playerIndex, pGame);
-            int val = visaResultatskarm(pGame->pRenderer, result.win, result.time);
-            if (val == 0)
+            GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame);
+
+// Endast visa vinnarbild om spelaren vann (dvs sista som lever)
+            if (result.win) {
+                int choice = showResult(pGame->pRenderer, true, result.time);
+                if (choice == 0)
                 playAgain = false;
+            }
+
         }
     }
 }
@@ -214,6 +217,7 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture  *backg
 {
     int  myID = pGame->playerIndex;      /* vilken orm är jag?            */
     bool isRunning = true;
+    bool resultShown = false; 
     SDL_Event ev;
 
     Uint64 startTime = SDL_GetTicks64();
@@ -284,15 +288,28 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture  *backg
             SDL_FreeSurface(surf);
         }
 
+        if (!isSnakeAlive(snakes[myID]) && !resultShown) {
+            resultShown = true;
+            int choice = showResult(renderer, false, (float)gameTime);
+            if (choice == 0) {
+                isRunning = false; // Spelaren vill avsluta
+            }
+            // Om choice == 1 (stanna kvar), gör ingenting. Spelaren tittar bara.
+        }
         /* 8. Render                                     */
         SDL_SetRenderDrawColor(renderer, 0,0,0,255);
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, background, NULL, NULL);
 
-        for (int i = 0; i < MAX_PLAYERS; ++i)
-            if (snakes[i] && isSnakeAlive(snakes[i]))
+        for (int i = 0; i < MAX_PLAYERS; ++i){
+            if (!snakes[i] || !isSnakeAlive(snakes[i]))
+                continue;
+            // Rita inte min egen orm om jag har dött och förlustskärmen har visats
+            if (i == myID && resultShown)
+                continue;
                 drawSnake(snakes[i]);
-
+        }
+        
         if (timerTex)
             SDL_RenderCopy(renderer, timerTex, NULL, &timerRect);
 

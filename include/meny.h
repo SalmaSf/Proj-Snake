@@ -9,8 +9,8 @@
 
 bool showStartMenu(SDL_Renderer* renderer, bool* ljudPa);
 bool showIPMenu(SDL_Renderer* renderer, char* ipBuffer, int bufferSize);
-bool showLobby(SDL_Renderer* renderer);
-int showResult(SDL_Renderer* renderer, bool vann, float tid); //den
+bool showLobby(SDL_Renderer *renderer, int numPlayers);
+int showResult(SDL_Renderer* renderer, bool won, float time); 
 void showInstructions(SDL_Renderer* renderer);
 
 

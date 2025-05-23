@@ -137,7 +137,7 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
                     mx >= howToPlayRect.x && mx <= howToPlayRect.x + howToPlayRect.w &&
                     my >= howToPlayRect.y && my <= howToPlayRect.y + howToPlayRect.h)
                 {
-                    showInstructions(renderer); //här!!
+                    showInstructions(renderer); // här!!
                 }
 
                 // Återställ visuellt
@@ -287,25 +287,29 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderDrawRect(renderer, &inputBox);
 
-        if (strlen(ipInput) > 0 && SDL_IsTextInputActive()) {
-    SDL_Surface *textSurface = TTF_RenderText_Solid(font, ipInput, svart);
-    if (textSurface) {
-        SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-        if (textTexture) {
-            SDL_Rect textRect = {
-                inputBox.x + 10,
-                inputBox.y + (inputBox.h - textSurface->h) / 2,
-                textSurface->w,
-                textSurface->h
-            };
-            SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
-            SDL_DestroyTexture(textTexture);
+        if (strlen(ipInput) > 0 && SDL_IsTextInputActive())
+        {
+            SDL_Surface *textSurface = TTF_RenderText_Solid(font, ipInput, svart);
+            if (textSurface)
+            {
+                SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+                if (textTexture)
+                {
+                    SDL_Rect textRect = {
+                        inputBox.x + 10,
+                        inputBox.y + (inputBox.h - textSurface->h) / 2,
+                        textSurface->w,
+                        textSurface->h};
+                    SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+                    SDL_DestroyTexture(textTexture);
+                }
+                SDL_FreeSurface(textSurface);
+            }
+            else
+            {
+                SDL_Log("INFO: Could not render: %s", TTF_GetError());
+            }
         }
-        SDL_FreeSurface(textSurface);
-    } else {
-        SDL_Log("INFO: Could not render: %s", TTF_GetError());
-    }
-}
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
@@ -366,7 +370,7 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
     return true;
 }*/
 
-bool showLobby(SDL_Renderer *renderer)
+bool showLobby(SDL_Renderer *renderer, int numPlayers)
 {
     SDL_Texture *lobbyBackground = IMG_LoadTexture(renderer, "resources/lobby.png");
     if (!lobbyBackground)
@@ -397,9 +401,9 @@ bool showLobby(SDL_Renderer *renderer)
     SDL_Rect backgroundRect = {0, 0, 800, 700};
 
     // Positioner för varje orm (stora huvuden: 170x170)
-    SDL_Rect pinkRect = {15, 15, 170, 170};   // Vänster upp
-    SDL_Rect yellowRect = {615, 15, 170, 170};   // Höger upp
-    SDL_Rect greenRect = {15, 515, 170, 170};  // Vänster ner
+    SDL_Rect pinkRect = {15, 15, 170, 170};     // Vänster upp
+    SDL_Rect yellowRect = {615, 15, 170, 170};  // Höger upp
+    SDL_Rect greenRect = {15, 515, 170, 170};   // Vänster ner
     SDL_Rect purpleRect = {615, 515, 170, 170}; // Höger ner
 
     while (isRunning)
@@ -476,9 +480,9 @@ bool showLobby(SDL_Renderer *renderer)
 int showResult(SDL_Renderer *renderer, bool won, float time)
 {
     // 1. Ladda bakgrund
-    SDL_Texture *background = IMG_LoadTexture(renderer, "resources/vann.png");
-    // const char* bildFil = vann ? "resources/vann.png" : "resources/lose.png"; //kanske funkar med servern??
-    // SDL_Texture* background = IMG_LoadTexture(renderer, bildFil);
+    //SDL_Texture *background = IMG_LoadTexture(renderer, "resources/vann.png");
+    const char *picture = won ? "resources/vann.png" : "resources/lose.png"; // kanske funkar med servern??
+    SDL_Texture *background = IMG_LoadTexture(renderer, picture);
     if (!background)
     {
         SDL_Log("Could not load vann.png: %s", IMG_GetError());
