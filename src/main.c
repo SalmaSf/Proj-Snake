@@ -200,17 +200,10 @@ void runGame(Game *pGame)
 
             // 6. Starta spelet
             GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame);
-
 // Endast visa vinnarbild om spelaren vann (dvs sista som lever)
             if (result.win) {
                 int choice = showResult(pGame->pRenderer, true, result.time);
                 if (choice == 0)
-            GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame); //testar
-            int val = showResult(pGame->pRenderer, result.win, result.time);
-            if (val == 0)
-                playAgain = false;
-            }
-
         }
     }
 }
