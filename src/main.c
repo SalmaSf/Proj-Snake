@@ -56,7 +56,7 @@ void sendSnakePosition(Game *pGame, int x, int y);
 void receiveServerUpdate(Game *pGame);
 void closeSnakeClient(Game *pGame);
 GameResult gameLoop(Snake *snakes[], SDL_Renderer *pRenderer, SDL_Texture  *pBackground, Game *pGame); //testar
-
+void showPlayerIdentity(SDL_Renderer *renderer, int clientID);
 int main(int argc, char *argv[])
 {
     Game game = {0};
@@ -170,8 +170,11 @@ void runGame(Game *pGame)
             {
                 receiveServerUpdate(pGame); // Få state från server
 
-                if (pGame->state == ONGOING || pGame->serverData.numPlayers >= 4)
+                if (pGame->state == ONGOING)
                 {
+                    showPlayerIdentity(pGame->pRenderer, pGame->playerIndex);
+
+
                     inLobby = false;
                     break;
                 }
@@ -370,6 +373,7 @@ int initSnakeClient(Game *pGame, const char *ipAddress)
             memcpy(&clientID, pGame->packet->data, sizeof(int));
             pGame->playerIndex = clientID;
             pGame->playerIndexSet = true;
+        
             printf(" My clientID received from the server: %d\n", clientID);
             break;
         }

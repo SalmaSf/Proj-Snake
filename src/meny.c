@@ -622,3 +622,39 @@ void showInstructions(SDL_Renderer *renderer)
     SDL_DestroyTexture(instrPicture);
     SDL_DestroyTexture(closeIcon);
 }
+
+void showPlayerIdentity(SDL_Renderer *renderer, int clientID) {
+    char path[64];
+    sprintf(path, "resources/identity_%d.png", clientID);  // t.ex. identity_0.png
+
+    SDL_Texture *img = IMG_LoadTexture(renderer, path);
+    if (!img) {
+        SDL_Log("Could not load identity image: %s", IMG_GetError());
+        return;
+    }
+
+    SDL_Event event;
+    bool running = true;
+    Uint32 startTime = SDL_GetTicks();
+
+    while (running) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT ||
+                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN) ||
+                (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)) {
+                running = false;
+            }
+        }
+
+        Uint32 elapsed = SDL_GetTicks() - startTime;
+        if (elapsed > 3000)  // Visa i 3 sekunder
+            running = false;
+
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, img, NULL, NULL);
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16);
+    }
+
+    SDL_DestroyTexture(img);
+}
