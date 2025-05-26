@@ -297,22 +297,22 @@ void run(Game *pGame)
     }
 }
 
-    void cleanup(Game * pGame)
-    {
-        if (pGame->packet)
-            SDLNet_FreePacket(pGame->packet);
-        if (pGame->socket)
-            SDLNet_UDP_Close(pGame->socket);
-        if (pGame->renderer)
-            SDL_DestroyRenderer(pGame->renderer);
-        if (pGame->window)
-            SDL_DestroyWindow(pGame->window);
-        if (pGame->background)
-            SDL_DestroyTexture(pGame->background);
-        IMG_Quit();
-        SDLNet_Quit();
-        SDL_Quit();
-    }
+void cleanup(Game *pGame)
+{
+    if (pGame->packet)
+        SDLNet_FreePacket(pGame->packet);
+    if (pGame->socket)
+        SDLNet_UDP_Close(pGame->socket);
+    if (pGame->renderer)
+        SDL_DestroyRenderer(pGame->renderer);
+    if (pGame->window)
+        SDL_DestroyWindow(pGame->window);
+    if (pGame->background)
+        SDL_DestroyTexture(pGame->background);
+    IMG_Quit();
+    SDLNet_Quit();
+    SDL_Quit();
+}
 
 void setUpGame(Game *pGame)
 {
@@ -378,13 +378,13 @@ void sendGameData(Game *pGame)
                 continue; // hoppa över sändning
             }
             pGame->packet->address = pGame->clients[i].address;
-            for (int i = 0; i < MAX_PLAYERS; ++i)
+            for (int j = 0; j < MAX_PLAYERS; ++j)
             {
                 printf("Sending snake[%d]: x=%d y=%d alive=%d\n",
                        i,
-                       pGame->sData.snakes[i].x,
-                       pGame->sData.snakes[i].y,
-                       pGame->sData.snakes[i].alive);
+                       pGame->sData.snakes[j].x,
+                       pGame->sData.snakes[j].y,
+                       pGame->sData.snakes[j].alive);
             }
 
             SDLNet_UDP_Send(pGame->socket, -1, pGame->packet);
@@ -461,38 +461,37 @@ void addClient(IPaddress address, Game *pGame)
 
         printf(" New client added at index %d\n", index);
 
-            // Skapa orm för denna klient
-            if (pGame->snakes[index])
-            {
-                destroySnake(pGame->snakes[index]);
-            }
-            printf("Sent clientID %d to clienten\n", clientID);
-            //  Olika startpositioner och färger per klient
-            switch (index)
-            {
-            case 0:
-                pGame->snakes[index] = createSnake(400, 0, pGame->renderer, 800, 700, "resources/purple_head.png", "resources/purple_body.png");
-                pGame->sData.snakes[index].alive = true;
-                break;
-            case 1:
-                pGame->snakes[index] = createSnake(400, 700, pGame->renderer, 800, 700, "resources/yellow_head.png", "resources/yellow_body.png");
-                pGame->sData.snakes[index].alive = true;
-                break;
-            case 2:
-                pGame->snakes[index] = createSnake(0, 350, pGame->renderer, 800, 700, "resources/green_head.png", "resources/green_body.png");
-                pGame->sData.snakes[index].alive = true;
-                break;
-            case 3:
-                pGame->snakes[index] = createSnake(800, 350, pGame->renderer, 800, 700, "resources/pink_head.png", "resources/pink_body.png");
-                pGame->sData.snakes[index].alive = true;
-                break;
-            default:
-                printf(" Invalid snakeindex %d\n", index);
-            }
-        }
-        else
+        // Skapa orm för denna klient
+        if (pGame->snakes[index])
         {
-            printf(" Max number of clients (%d) reached.\n", MAX_PLAYERS);
+            destroySnake(pGame->snakes[index]);
+        }
+        printf("Sent clientID %d to clienten\n", clientID);
+        //  Olika startpositioner och färger per klient
+        switch (index)
+        {
+        case 0:
+            pGame->snakes[index] = createSnake(400, 0, pGame->renderer, 800, 700, "resources/purple_head.png", "resources/purple_body.png");
+            pGame->sData.snakes[index].alive = true;
+            break;
+        case 1:
+            pGame->snakes[index] = createSnake(400, 700, pGame->renderer, 800, 700, "resources/yellow_head.png", "resources/yellow_body.png");
+            pGame->sData.snakes[index].alive = true;
+            break;
+        case 2:
+            pGame->snakes[index] = createSnake(0, 350, pGame->renderer, 800, 700, "resources/green_head.png", "resources/green_body.png");
+            pGame->sData.snakes[index].alive = true;
+            break;
+        case 3:
+            pGame->snakes[index] = createSnake(800, 350, pGame->renderer, 800, 700, "resources/pink_head.png", "resources/pink_body.png");
+            pGame->sData.snakes[index].alive = true;
+            break;
+        default:
+            printf(" Invalid snakeindex %d\n", index);
         }
     }
-
+    else
+    {
+        printf(" Max number of clients (%d) reached.\n", MAX_PLAYERS);
+    }
+}

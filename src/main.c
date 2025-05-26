@@ -272,7 +272,7 @@ GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture  *backg
         /* 6. Skicka MIN nya position till servern       */
         int headX = getSnakeHeadX(snakes[myID]);
         int headY = getSnakeHeadY(snakes[myID]);
-        sendSnakePosition(pGame, headX, headY); //Skicka "get mouse state" Ulrika tips, skicka mus data och inte vart huvudet är
+        sendSnakePosition(pGame, mx, my); //Skicka "get mouse state" Ulrika tips, skicka mus data och inte vart huvudet är
  
         /* 7. Uppdatera timer-text                       */
         int curTime = (SDL_GetTicks64() - startTime) / 1000;
