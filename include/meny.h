@@ -7,7 +7,7 @@
 #include "snake.h"  
 
 
-bool showStartMenu(SDL_Renderer* renderer, bool* ljudPa);
+bool showStartMenu(SDL_Renderer* renderer, bool* soundOn);
 bool showIPMenu(SDL_Renderer* renderer, char* ipBuffer, int bufferSize);
 bool showLobby(SDL_Renderer *renderer, int numPlayers);
 int showResult(SDL_Renderer* renderer, bool won, float time); 

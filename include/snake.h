@@ -15,8 +15,7 @@ typedef struct snake Snake;
 
 Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int window_height, const char *headTexturePath, const char *segmentTexturePath);
 
-//void updateSnake(Snake *pSnake);
-void updateSnake(Snake *s, bool isLocalPlayer, int targetX, int targetY); //Testar
+void updateSnake(Snake *s, bool isLocalPlayer, int targetX, int targetY);
 void drawSnake(Snake *pSnake);
 void destroySnake(Snake *pSnake);
 void addSegment(Snake *pSnake);
@@ -24,7 +23,6 @@ void updateSegments(Snake *pSnake);
 int getSnakeHeadX(Snake *snake);
 int getSnakeHeadY(Snake *snake);
 
-void reviveSnake(Snake *snake);
 
 bool checkCollision(Snake *attacker, Snake *target);
 bool isSnakeAlive(Snake *snake);

@@ -17,7 +17,7 @@ typedef struct
     int y;
     bool alive;
     GameState state;
-} ClientData; // Sent from client to server
+} ClientData;
 
 typedef struct
 {
@@ -32,7 +32,6 @@ typedef struct
     SnakeInfo snakes[MAX_PLAYERS];
     int numPlayers;
     GameState state;
-} ServerData; // Sent from server to clients
+} ServerData;
 
 #endif
-

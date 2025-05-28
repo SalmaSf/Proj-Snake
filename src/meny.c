@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include "meny.h"
 
-bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
+bool showStartMenu(SDL_Renderer *renderer, bool *soundOn)
 {
     SDL_Texture *background = IMG_LoadTexture(renderer, "resources/meny_bakgrund.png");
     SDL_Texture *startButton = IMG_LoadTexture(renderer, "resources/start_knapp.png");
@@ -39,7 +39,7 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
     SDL_Rect soundVisuellRect = soundRect;
     SDL_Rect closeRect = {20, 20, 60, 60};
     SDL_Rect closeVisuellRect = closeRect;
-    SDL_Rect howToPlayRect = {260, 550, 280, 140}; //
+    SDL_Rect howToPlayRect = {260, 550, 280, 140};
     SDL_Rect howToPlayVisuellRect = howToPlayRect;
 
     bool isPressed = false;
@@ -62,7 +62,6 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
                 int mx = event.button.x;
                 int my = event.button.y;
 
-                // Start-knapp
                 if (mx >= buttonRect.x && mx <= buttonRect.x + buttonRect.w &&
                     my >= buttonRect.y && my <= buttonRect.y + buttonRect.h)
                 {
@@ -70,7 +69,6 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
                     buttonVisuellRect.y += 4;
                 }
 
-                // Ljud-knapp
                 if (mx >= soundRect.x && mx <= soundRect.x + soundRect.w &&
                     my >= soundRect.y && my <= soundRect.y + soundRect.h)
                 {
@@ -78,19 +76,18 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
                     soundVisuellRect.y += 4;
                 }
 
-                // Close-knapp
                 if (mx >= closeRect.x && mx <= closeRect.x + closeRect.w &&
                     my >= closeRect.y && my <= closeRect.y + closeRect.h)
                 {
                     closePressed = true;
                     closeVisuellRect.y += 4;
                 }
-                // How to Play-knapp
+
                 if (mx >= howToPlayRect.x && mx <= howToPlayRect.x + howToPlayRect.w &&
                     my >= howToPlayRect.y && my <= howToPlayRect.y + howToPlayRect.h)
                 {
                     howToPlayPressed = true;
-                    howToPlayVisuellRect.y += 4; // Tryck-effekt
+                    howToPlayVisuellRect.y += 4;
                 }
             }
 
@@ -99,7 +96,6 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
                 int mx = event.button.x;
                 int my = event.button.y;
 
-                // Start
                 if (isPressed &&
                     mx >= buttonRect.x && mx <= buttonRect.x + buttonRect.w &&
                     my >= buttonRect.y && my <= buttonRect.y + buttonRect.h)
@@ -112,16 +108,14 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
                     return true;
                 }
 
-                // Ljud
                 if (soundPressed &&
                     mx >= soundRect.x && mx <= soundRect.x + soundRect.w &&
                     my >= soundRect.y && my <= soundRect.y + soundRect.h)
                 {
-                    *ljudPa = !(*ljudPa);
-                    Mix_VolumeMusic(*ljudPa ? MIX_MAX_VOLUME : 0);
+                    *soundOn = !(*soundOn);
+                    Mix_VolumeMusic(*soundOn ? MIX_MAX_VOLUME : 0);
                 }
 
-                // Close
                 if (closePressed &&
                     mx >= closeRect.x && mx <= closeRect.x + closeRect.w &&
                     my >= closeRect.y && my <= closeRect.y + closeRect.h)
@@ -137,10 +131,9 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
                     mx >= howToPlayRect.x && mx <= howToPlayRect.x + howToPlayRect.w &&
                     my >= howToPlayRect.y && my <= howToPlayRect.y + howToPlayRect.h)
                 {
-                    showInstructions(renderer); // här!!
+                    showInstructions(renderer);
                 }
 
-                // Återställ visuellt
                 isPressed = false;
                 soundPressed = false;
                 closePressed = false;
@@ -152,12 +145,11 @@ bool showStartMenu(SDL_Renderer *renderer, bool *ljudPa)
             }
         }
 
-        // Rendering
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, background, NULL, NULL);
         SDL_RenderCopy(renderer, startButton, NULL, &buttonVisuellRect);
 
-        if (*ljudPa)
+        if (*soundOn)
             SDL_RenderCopy(renderer, soundOnIcon, NULL, &soundVisuellRect);
         else
             SDL_RenderCopy(renderer, soundOffIcon, NULL, &soundVisuellRect);
@@ -184,10 +176,10 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
     SDL_Texture *background = IMG_LoadTexture(renderer, "resources/ip_meny_bakgrund.png");
     if (!background)
     {
-        SDL_Log("Kunde inte ladda ip_meny_bakgrund.png: %s", IMG_GetError());
+        SDL_Log("Could not load ip_menu_bakgrund.png: %s", IMG_GetError());
         if (!background)
         {
-            printf("Bakgrund kunde inte laddas\n");
+            printf("Background could not load\n");
         }
         return false;
     }
@@ -201,7 +193,7 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
     SDL_StartTextInput();
     if (!SDL_IsTextInputActive())
     {
-        SDL_Log("⚠️ SDL text input could not be started!");
+        SDL_Log("SDL text input could not be started!");
     }
 
     TTF_Font *font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 32);
@@ -222,22 +214,18 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
     {
 
         SDL_RaiseWindow(SDL_GetWindowFromID(1));
-        printf("0");
         while (SDL_PollEvent(&event))
         {
-            printf("1");
 
             if (event.type == SDL_QUIT)
             {
                 isRunning = false;
-                printf("2");
             }
             else if (event.type == SDL_KEYDOWN)
             {
-                printf("3");
+
                 if (event.key.keysym.sym == SDLK_BACKSPACE && strlen(ipInput) > 0)
                 {
-                    printf("4");
                     ipInput[strlen(ipInput) - 1] = '\0';
                 }
                 else if (event.key.keysym.sym == SDLK_RETURN)
@@ -254,12 +242,11 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
                     }
                     else
                     {
-                        SDL_Log("⚠️ No IP-adress written.");
+                        SDL_Log("No IP-adress written.");
                     }
                 }
                 else if (event.key.keysym.sym == SDLK_ESCAPE)
                 {
-                    printf("6");
                     SDL_StopTextInput();
                     TTF_CloseFont(font);
                     SDL_DestroyTexture(background);
@@ -268,22 +255,17 @@ bool showIPMenu(SDL_Renderer *renderer, char *ipBuffer, int bufferSize)
             }
             else if (event.type == SDL_TEXTINPUT)
             {
-                printf("7");
                 if (strlen(ipInput) + strlen(event.text.text) < sizeof(ipInput) - 1)
                     strcat(ipInput, event.text.text);
             }
-            printf("8");
         }
 
-        // Rendera
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, background, NULL, NULL);
 
-        // Rita vit input-ruta
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &inputBox);
 
-        // Svart kant
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderDrawRect(renderer, &inputBox);
 
@@ -355,14 +337,13 @@ bool showLobby(SDL_Renderer *renderer, int numPlayers)
         return false;
     }
 
-    // Ladda ormbilder
     SDL_Texture *snakePink = IMG_LoadTexture(renderer, "resources/pink_head.png");
     SDL_Texture *snakeYellow = IMG_LoadTexture(renderer, "resources/purple_head.png");
     SDL_Texture *snakeGreen = IMG_LoadTexture(renderer, "resources/yellow_head.png");
     SDL_Texture *snakePurple = IMG_LoadTexture(renderer, "resources/snake_head.png");
 
     if (!snakePink || !snakeYellow || !snakeGreen || !snakePurple)
-    { // ändra namn
+    {
         SDL_Log("Could not load one or more snake pictures");
         SDL_DestroyTexture(lobbyBackground);
         return false;
@@ -371,16 +352,12 @@ bool showLobby(SDL_Renderer *renderer, int numPlayers)
     bool isRunning = true;
     SDL_Event event;
 
-    /* const int visaLobbyTidMS = 5000;
-     Uint32 startTime = SDL_GetTicks();*/
-
     SDL_Rect backgroundRect = {0, 0, 800, 700};
 
-    // Positioner för varje orm (stora huvuden: 170x170)
-    SDL_Rect pinkRect = {15, 15, 170, 170};     // Vänster upp
-    SDL_Rect yellowRect = {615, 15, 170, 170};  // Höger upp
-    SDL_Rect greenRect = {15, 515, 170, 170};   // Vänster ner
-    SDL_Rect purpleRect = {615, 515, 170, 170}; // Höger ner
+    SDL_Rect pinkRect = {15, 15, 170, 170};
+    SDL_Rect yellowRect = {615, 15, 170, 170};
+    SDL_Rect greenRect = {15, 515, 170, 170};
+    SDL_Rect purpleRect = {615, 515, 170, 170};
 
     while (SDL_PollEvent(&event))
     {
@@ -391,30 +368,20 @@ bool showLobby(SDL_Renderer *renderer, int numPlayers)
         }
     }
 
-    /*Uint32 elapsedTime = SDL_GetTicks() - startTime;
-    if (elapsedTime >= visaLobbyTidMS)
-    {
-        isRunning = false;
-    }*/
-
     SDL_RenderClear(renderer);
 
-    // Rita stillastående bakgrund
     SDL_RenderCopy(renderer, lobbyBackground, NULL, &backgroundRect);
 
-    // Rita ormar
     SDL_RenderCopy(renderer, snakePink, NULL, &pinkRect);
     SDL_RenderCopy(renderer, snakeYellow, NULL, &yellowRect);
     SDL_RenderCopy(renderer, snakeGreen, NULL, &greenRect);
     SDL_RenderCopy(renderer, snakePurple, NULL, &purpleRect);
 
-    // Tunga-animering (blinkar var 300 ms)
     bool showTongue = ((SDL_GetTicks() / 300) % 2 == 0);
     if (showTongue)
     {
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 
-        // Rita tungor
         SDL_Rect tonguePink = {
             pinkRect.x + pinkRect.w / 2 - 3,
             pinkRect.y + pinkRect.h - 5,
@@ -439,7 +406,7 @@ bool showLobby(SDL_Renderer *renderer, int numPlayers)
     }
 
     SDL_RenderPresent(renderer);
-    SDL_Delay(16); // ca 60 FPS
+    SDL_Delay(16);
 
     SDL_DestroyTexture(lobbyBackground);
     SDL_DestroyTexture(snakePink);
@@ -452,9 +419,7 @@ bool showLobby(SDL_Renderer *renderer, int numPlayers)
 
 int showResult(SDL_Renderer *renderer, bool won, float time)
 {
-    // 1. Ladda bakgrund
-    //SDL_Texture *background = IMG_LoadTexture(renderer, "resources/vann.png");
-    const char *picture = won ? "resources/vann.png" : "resources/lose.png"; // kanske funkar med servern??
+    const char *picture = won ? "resources/vann.png" : "resources/lose.png";
     SDL_Texture *background = IMG_LoadTexture(renderer, picture);
     if (!background)
     {
@@ -462,7 +427,6 @@ int showResult(SDL_Renderer *renderer, bool won, float time)
         return 0;
     }
 
-    // 2. Ladda font
     TTF_Font *font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 40);
     TTF_SetFontStyle(font, TTF_STYLE_ITALIC);
     if (!font)
@@ -474,7 +438,6 @@ int showResult(SDL_Renderer *renderer, bool won, float time)
 
     SDL_Color vit = {255, 255, 255, 255};
 
-    // 3. Skapa tidstext
     char timeText[64];
     int min = (int)time / 60;
     int sek = (int)time % 60;
@@ -485,11 +448,9 @@ int showResult(SDL_Renderer *renderer, bool won, float time)
     SDL_Rect tidRect = {325, 330, timeSurface->w, timeSurface->h};
     SDL_FreeSurface(timeSurface);
 
-    // 4. Definiera klickbara områden (matchar bilden)
     SDL_Rect playAgainKnapp = {225, 440, 250, 60};
     SDL_Rect quitKnapp = {225, 520, 250, 60};
 
-    // 5. Event-loop
     SDL_Event event;
     bool running = true;
 
@@ -500,34 +461,30 @@ int showResult(SDL_Renderer *renderer, bool won, float time)
             if (event.type == SDL_QUIT)
                 running = false;
 
-            // Musen trycks ned
             if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
             {
                 int mx = event.button.x;
                 int my = event.button.y;
 
-                // Klick på QUIT
                 if (mx >= quitKnapp.x && mx <= quitKnapp.x + quitKnapp.w &&
                     my >= quitKnapp.y && my <= quitKnapp.y + quitKnapp.h)
                 {
                     SDL_DestroyTexture(background);
                     SDL_DestroyTexture(timeTex);
                     TTF_CloseFont(font);
-                    return 0; // QUIT
+                    return 0;
                 }
 
-                // Klick på PLAY AGAIN
                 if (mx >= playAgainKnapp.x && mx <= playAgainKnapp.x + playAgainKnapp.w &&
                     my >= playAgainKnapp.y && my <= playAgainKnapp.y + playAgainKnapp.h)
                 {
                     SDL_DestroyTexture(background);
                     SDL_DestroyTexture(timeTex);
                     TTF_CloseFont(font);
-                    return 1; // PLAY AGAIN
+                    return 1;
                 }
             }
 
-            // Tangentbordsalternativ
             if (event.type == SDL_KEYDOWN)
             {
                 if (event.key.keysym.sym == SDLK_q || event.key.keysym.sym == SDLK_ESCAPE)
@@ -535,7 +492,6 @@ int showResult(SDL_Renderer *renderer, bool won, float time)
             }
         }
 
-        // Rendera
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, background, NULL, NULL);
         SDL_RenderCopy(renderer, timeTex, NULL, &tidRect);
@@ -543,7 +499,6 @@ int showResult(SDL_Renderer *renderer, bool won, float time)
         SDL_Delay(16);
     }
 
-    // Städning
     SDL_DestroyTexture(background);
     SDL_DestroyTexture(timeTex);
     TTF_CloseFont(font);
@@ -588,7 +543,7 @@ void showInstructions(SDL_Renderer *renderer)
                     my >= closeRect.y && my <= closeRect.y + closeRect.h)
                 {
                     closePressed = true;
-                    closeVisualRect.y += 4; // Visuell feedback
+                    closeVisualRect.y += 4;
                 }
             }
 
@@ -602,7 +557,7 @@ void showInstructions(SDL_Renderer *renderer)
                 }
 
                 closePressed = false;
-                closeVisualRect = closeRect; // Återställ visuell position
+                closeVisualRect = closeRect;
             }
 
             if (event.type == SDL_KEYDOWN &&
@@ -623,12 +578,14 @@ void showInstructions(SDL_Renderer *renderer)
     SDL_DestroyTexture(closeIcon);
 }
 
-void showPlayerIdentity(SDL_Renderer *renderer, int clientID) {
+void showPlayerIdentity(SDL_Renderer *renderer, int clientID)
+{
     char path[64];
-    sprintf(path, "resources/identity_%d.png", clientID);  // t.ex. identity_0.png
+    sprintf(path, "resources/identity_%d.png", clientID);
 
     SDL_Texture *img = IMG_LoadTexture(renderer, path);
-    if (!img) {
+    if (!img)
+    {
         SDL_Log("Could not load identity image: %s", IMG_GetError());
         return;
     }
@@ -637,17 +594,20 @@ void showPlayerIdentity(SDL_Renderer *renderer, int clientID) {
     bool running = true;
     Uint32 startTime = SDL_GetTicks();
 
-    while (running) {
-        while (SDL_PollEvent(&event)) {
+    while (running)
+    {
+        while (SDL_PollEvent(&event))
+        {
             if (event.type == SDL_QUIT ||
                 (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN) ||
-                (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)) {
+                (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT))
+            {
                 running = false;
             }
         }
 
         Uint32 elapsed = SDL_GetTicks() - startTime;
-        if (elapsed > 3000)  // Visa i 3 sekunder
+        if (elapsed > 3000)
             running = false;
 
         SDL_RenderClear(renderer);

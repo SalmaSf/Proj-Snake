@@ -18,7 +18,7 @@ typedef struct
     IPaddress address;
     int index;
     bool active;
-    ClientData data; // Lägger till ClientData i klienten
+    ClientData data;
 } Client;
 
 typedef struct
@@ -157,7 +157,6 @@ void run(Game *pGame)
 
             while (SDLNet_UDP_Recv(pGame->socket, pGame->packet) == 1)
             {
-                // Ignorerar inkommande klientpaket om spelet inte pågår
                 if (pGame->state != ONGOING)
                     continue;
 
@@ -183,9 +182,9 @@ void run(Game *pGame)
                 if (pGame->clients[i].active && pGame->snakes[i])
                 {
                     ClientData *data = &pGame->clients[i].data;
-                    pGame->sData.snakes[i].x = data->x;         // salma testar något
-                    pGame->sData.snakes[i].y = data->y;         // salma testar något
-                    pGame->sData.snakes[i].alive = data->alive; // salma testar något
+                    pGame->sData.snakes[i].x = data->x;
+                    pGame->sData.snakes[i].y = data->y;
+                    pGame->sData.snakes[i].alive = data->alive;
                     if (data->alive)
                     {
                         printf("[UPDATE] Snake %d is alive. Updating position to x=%d, y=%d\n", i, data->x, data->y);
@@ -215,7 +214,6 @@ void run(Game *pGame)
                 }
             }
 
-            // Kolla om bara en orm är kvar
             int aliveCount = 0;
             for (int i = 0; i < MAX_PLAYERS; i++)
             {
@@ -233,8 +231,6 @@ void run(Game *pGame)
 
                 pGame->state = GAME_OVER;
             }
-
-            // TODO: Lägg till kollisioner här och uppdatera state till GAME_OVER vid behov
 
             SDL_SetRenderDrawColor(pGame->renderer, 0, 0, 0, 255);
             SDL_RenderClear(pGame->renderer);
@@ -256,7 +252,6 @@ void run(Game *pGame)
             sendGameData(pGame);
             SDL_SetRenderDrawColor(pGame->renderer, 0, 0, 0, 255);
             SDL_RenderClear(pGame->renderer);
-            // TODO: Lägg till "Game Over" grafik eller text
             SDL_RenderPresent(pGame->renderer);
             break;
 
@@ -285,7 +280,6 @@ void run(Game *pGame)
                 }
             }
             SDL_RenderClear(pGame->renderer);
-            // TODO: Lägg till "Väntar på spelare" grafik eller text
             SDL_RenderPresent(pGame->renderer);
             if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
                 pGame->running = false;
@@ -316,16 +310,6 @@ void cleanup(Game *pGame)
 
 void setUpGame(Game *pGame)
 {
-    // ÅTERSTÄLL varje orm till aktiv (alive = true)
-    for (int i = 0; i < MAX_PLAYERS; i++)
-    {
-        if (pGame->snakes[i])
-        {
-            reviveSnake(pGame->snakes[i]);
-            printf("Revived snake %d\n", i);
-        }
-    }
-    // Sätt status till ONGOING
     pGame->state = ONGOING;
     printf("[SERVER] Game status set to ONGOING\n");
 }
@@ -342,7 +326,6 @@ void sendGameData(Game *pGame)
         {
             pGame->sData.snakes[i].x = getSnakeHeadX(pGame->snakes[i]);
             pGame->sData.snakes[i].y = getSnakeHeadY(pGame->snakes[i]);
-            // pGame->sData.snakes[i].alive = isSnakeAlive(pGame->snakes[i]);
         }
         else
         {
@@ -356,17 +339,8 @@ void sendGameData(Game *pGame)
     {
         if (pGame->clients[i].active)
         {
-            if (pGame->packet->maxlen >= sizeof(ServerData)) //  FIXAD KOLL
+            if (pGame->packet->maxlen >= sizeof(ServerData))
             {
-                /*for (int i = 0; i < MAX_PLAYERS; i++)
-                {
-                    printf("[SEND DEBUG] snake[%d]: x=%d y=%d alive=%d\n",
-                           i,
-                           pGame->sData.snakes[i].x,
-                           pGame->sData.snakes[i].y,
-                           pGame->sData.snakes[i].alive);
-                }*/
-
                 memcpy(pGame->packet->data, &pGame->sData, sizeof(ServerData));
                 pGame->packet->len = sizeof(ServerData);
                 printf("Copied ServerData to packet (size = %lu bytes)\n", sizeof(ServerData));
@@ -375,7 +349,7 @@ void sendGameData(Game *pGame)
             {
                 printf(" ServerData too big for packet buffer! maxlen=%d, krävs=%lu\n",
                        pGame->packet->maxlen, sizeof(ServerData));
-                continue; // hoppa över sändning
+                continue;
             }
             pGame->packet->address = pGame->clients[i].address;
             for (int j = 0; j < MAX_PLAYERS; ++j)
@@ -402,7 +376,7 @@ int getClientIndex(Game *pGame, IPaddress *address)
             return i;
         }
     }
-    return -1; // No matching client found
+    return -1;
 }
 void handlePacket(Game *pGame)
 {
@@ -423,8 +397,7 @@ void handlePacket(Game *pGame)
         return;
     }
 
-    // Uppdatera klientens data
-    pGame->clients[clientIndex].data = clientData; // Sparar klientens data i Game-strukturen
+    pGame->clients[clientIndex].data = clientData;
 }
 
 void addClient(IPaddress address, Game *pGame)
@@ -442,7 +415,7 @@ void addClient(IPaddress address, Game *pGame)
         pGame->clients[index].address = address;
         pGame->clients[index].index = index;
         pGame->clients[index].active = true;
-        pGame->clients[index].data.alive = true; // Ulrikas tips
+        pGame->clients[index].data.alive = true;
         pGame->numClients++;
 
         int clientID = index;
@@ -461,13 +434,11 @@ void addClient(IPaddress address, Game *pGame)
 
         printf(" New client added at index %d\n", index);
 
-        // Skapa orm för denna klient
         if (pGame->snakes[index])
         {
             destroySnake(pGame->snakes[index]);
         }
         printf("Sent clientID %d to clienten\n", clientID);
-        //  Olika startpositioner och färger per klient
         switch (index)
         {
         case 0:

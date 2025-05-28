@@ -65,8 +65,8 @@ Snake *createSnake(int x, int y, SDL_Renderer *pRenderer, int window_width, int 
     SDL_FreeSurface(pSurface);
     SDL_QueryTexture(pSnake->pTexture, NULL, NULL, &pSnake->headRect.w, &pSnake->headRect.h);
 
-    pSnake->headRect.w = 45; // Sätt en fast bredd för huvudet
-    pSnake->headRect.h = 45; // Sätt en fast höjd för huvudet
+    pSnake->headRect.w = 45;
+    pSnake->headRect.h = 45;
 
     pSnake->window_width = window_width;
     pSnake->window_height = window_height;
@@ -97,7 +97,6 @@ void addSegment(Snake *pSnake)
     while (tail->next != NULL)
         tail = tail->next;
 
-    // Placera det nya segmentet precis där sista segmentet är
     newSegment->x = tail->x;
     newSegment->y = tail->y;
     newSegment->next = NULL;
@@ -121,16 +120,14 @@ void updateSegments(Snake *pSnake)
     }
 }
 
-// void updateSnake(Snake *pSnake)
-void updateSnake(Snake *s, bool isLocalPlayer, int targetX, int targetY) // testar
+void updateSnake(Snake *s, bool isLocalPlayer, int targetX, int targetY)
 {
     int mouseX, mouseY;
 
-    /* Fjärr-orm – styr med koordinater du fick från servern */
     mouseX = targetX;
     mouseY = targetY;
 
-    static float lastAngle = 0.0f; /* bevaras per orm */
+    static float lastAngle = 0.0f;
     float dx = mouseX - s->head->x;
     float dy = mouseY - s->head->y;
 
@@ -145,7 +142,6 @@ void updateSnake(Snake *s, bool isLocalPlayer, int targetX, int targetY) // test
     float moveX = cosf(lastAngle) * s->speed;
     float moveY = sinf(lastAngle) * s->speed;
 
-    /* flytta huvudet */
     if (distance > s->speed)
     {
         s->head->x += moveX;
@@ -156,10 +152,9 @@ void updateSnake(Snake *s, bool isLocalPlayer, int targetX, int targetY) // test
         s->head->x = mouseX;
         s->head->y = mouseY;
     }
-    s->head->x += moveX; /* dubbla steget som i din originalkod */
+    s->head->x += moveX;
     s->head->y += moveY;
 
-    /* --------- WRAP --------- */
     if (s->head->x < 0)
         s->head->x += s->window_width;
     else if (s->head->x >= s->window_width)
@@ -187,7 +182,7 @@ void updateSnake(Snake *s, bool isLocalPlayer, int targetX, int targetY) // test
 bool checkCollision(Snake *attacker, Snake *target)
 {
     if (!attacker->isAlive || !target->isAlive)
-        return false; // Om nån är död, hoppa över
+        return false;
 
     Segment *current = target->head;
 
@@ -197,7 +192,7 @@ bool checkCollision(Snake *attacker, Snake *target)
         float dy = attacker->head->y - current->y;
         float distance = sqrtf(dx * dx + dy * dy);
 
-        if (distance < 10.0f) // Mindre än 10 pixlar => träff
+        if (distance < 10.0f)
         {
             return true;
         }
@@ -238,12 +233,12 @@ void setSnakePosition(Snake *snake, int x, int y)
 
 void drawSnake(Snake *pSnake)
 {
-    // Rita segment
+
     Segment *seg = pSnake->head->next;
     SDL_Rect rect;
     rect.w = pSnake->headRect.w;
     rect.h = pSnake->headRect.h;
-    while (seg) //????
+    while (seg)
     {
         rect.x = (int)(seg->x - rect.w / 2);
         rect.y = (int)(seg->y - rect.h / 2);
@@ -251,11 +246,9 @@ void drawSnake(Snake *pSnake)
         seg = seg->next;
     }
 
-    // Placera så att bildens topp (huvudet) är vid ormens position
     pSnake->headRect.x = (int)(pSnake->head->x - pSnake->headRect.w / 2);
     pSnake->headRect.y = (int)(pSnake->head->y - pSnake->headRect.h / 2);
 
-    // Rotera runt huvudets position (övre mittpunkt)
     SDL_Point center = {
         pSnake->headRect.w / 2,
         pSnake->headRect.h / 2};
@@ -284,12 +277,4 @@ void destroySnake(Snake *pSnake)
     if (pSnake->pSegmentTexture)
         SDL_DestroyTexture(pSnake->pSegmentTexture);
     free(pSnake);
-}
-
-void reviveSnake(Snake *snake)
-{
-    if (snake)
-    {
-        snake->isAlive = true;
-    }
 }

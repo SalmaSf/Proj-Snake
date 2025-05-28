@@ -40,7 +40,7 @@ typedef struct
     TTF_Font *font;
 
     GameState state;
-    ServerData serverData; //testar
+    ServerData serverData;
 
     UDPsocket udpSocket;
     IPaddress serverAddr;
@@ -55,7 +55,7 @@ int initSnakeClient(Game *pGame, const char *ipAddress);
 void sendSnakePosition(Game *pGame, int x, int y);
 void receiveServerUpdate(Game *pGame);
 void closeSnakeClient(Game *pGame);
-GameResult gameLoop(Snake *snakes[], SDL_Renderer *pRenderer, SDL_Texture  *pBackground, Game *pGame); //testar
+GameResult gameLoop(Snake *snakes[], SDL_Renderer *pRenderer, SDL_Texture *pBackground, Game *pGame);
 void showPlayerIdentity(SDL_Renderer *renderer, int clientID);
 int main(int argc, char *argv[])
 {
@@ -138,7 +138,7 @@ void runGame(Game *pGame)
         bool playAgain = true;
         while (playAgain)
         {
-            // 1. IP-meny
+
             if (!showIPMenu(pGame->pRenderer, ipBuffer, sizeof(ipBuffer)))
                 break;
 
@@ -147,49 +147,45 @@ void runGame(Game *pGame)
             else
                 printf("No IP address entered.\n");
 
-            // 2. Initiera nätverk
             if (!initSnakeClient(pGame, ipBuffer))
             {
                 SDL_Log("Network initialization failed.");
                 break;
             }
-            // Sätt alla snakes till NULL innan du börjar ta emot data från servern
+
             for (int i = 0; i < MAX_PLAYERS; i++)
             {
                 pGame->snakes[i] = NULL;
             }
-            // 3. Skicka "joined"
+
             const char *joinedMsg = "Joined";
             memcpy(pGame->packet->data, joinedMsg, strlen(joinedMsg) + 1);
             pGame->packet->len = strlen(joinedMsg) + 1;
             SDLNet_UDP_Send(pGame->udpSocket, -1, pGame->packet);
 
-            // 4. Vänta i lobby
             bool inLobby = true;
             while (inLobby)
             {
-                receiveServerUpdate(pGame); // Få state från server
+                receiveServerUpdate(pGame);
 
                 if (pGame->state == ONGOING)
                 {
                     showPlayerIdentity(pGame->pRenderer, pGame->playerIndex);
 
-
                     inLobby = false;
                     break;
                 }
 
-                if (!showLobby(pGame->pRenderer, pGame->serverData.numPlayers)) // ESC eller avbryt
+                if (!showLobby(pGame->pRenderer, pGame->serverData.numPlayers))
                 {
                     playAgain = false;
                     inLobby = false;
                     break;
                 }
 
-                SDL_Delay(100); // För att spara CPU
+                SDL_Delay(100);
             }
 
-            // 5. Skapa ormar
             for (int i = 0; i < MAX_PLAYERS; i++)
             {
                 if (pGame->snakes[i])
@@ -201,130 +197,133 @@ void runGame(Game *pGame)
             pGame->snakes[2] = createSnake(0, WINDOW_HEIGHT / 2, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/green_head.png", "resources/green_body.png");
             pGame->snakes[3] = createSnake(WINDOW_WIDTH, WINDOW_HEIGHT / 2, pGame->pRenderer, WINDOW_WIDTH, WINDOW_HEIGHT, "resources/pink_head.png", "resources/pink_body.png");
 
-            // 6. Starta spelet
             GameResult result = gameLoop(pGame->snakes, pGame->pRenderer, pGame->pBackground, pGame);
-// Endast visa vinnarbild om spelaren vann (dvs sista som lever)
-            if (result.win) {
+
+            if (result.win)
+            {
                 int choice = showResult(pGame->pRenderer, true, result.time);
                 if (choice == 0)
                     playAgain = false;
             }
-        } 
+        }
     }
 }
 
-GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture  *background, Game *pGame)          //Testar    /* ← playerIndex tas från pGame   */
+GameResult gameLoop(Snake *snakes[], SDL_Renderer *renderer, SDL_Texture *background, Game *pGame)
 {
-    int  myID = pGame->playerIndex;      /* vilken orm är jag?            */
+    int myID = pGame->playerIndex;
     bool isRunning = true;
-    bool resultShown = false; 
+    bool resultShown = false;
     SDL_Event ev;
 
     Uint64 startTime = SDL_GetTicks64();
-    int     gameTime = -1;
+    int gameTime = -1;
 
-    /* --- timer-text --- */
-    TTF_Font  *font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 24);
-    SDL_Color  txtColor = {255,255,255,255};
+    TTF_Font *font = TTF_OpenFont("resources/GamjaFlower-Regular.ttf", 24);
+    SDL_Color txtColor = {255, 255, 255, 255};
     SDL_Texture *timerTex = NULL;
-    SDL_Rect     timerRect;
+    SDL_Rect timerRect;
 
-    /* ------------------ huvud-loop ------------------ */
     while (isRunning)
     {
-        /* 1. Ta emot senaste paketet från servern */
-        receiveServerUpdate(pGame);           /* fyller pGame->serverData       */
+
+        receiveServerUpdate(pGame);
         if (pGame->state == GAME_OVER)
             isRunning = false;
 
-        /* 2. Event/quit                                 */
-        while (SDL_PollEvent(&ev)) {
+        while (SDL_PollEvent(&ev))
+        {
             if (ev.type == SDL_QUIT ||
-               (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE))
+                (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE))
                 isRunning = false;
         }
 
-        /* 3. Vänta tills min orm faktiskt finns         */
-        if (!pGame->snakes[myID]) {
+        if (!pGame->snakes[myID])
+        {
             SDL_Delay(50);
             continue;
         }
 
-        /* 4. Läs musen EN gång                          */
         int mx, my;
         SDL_GetMouseState(&mx, &my);
 
-        /* 5. Uppdatera alla levande ormar               */
-        for (int i = 0; i < MAX_PLAYERS; ++i) {
-            if (!snakes[i] || !isSnakeAlive(snakes[i])) continue;
+        for (int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            if (!snakes[i] || !isSnakeAlive(snakes[i]))
+                continue;
 
-            if (i == myID) {
-                /* min egen orm → musposition            */
-                updateSnake(snakes[i], true, mx, my); // skippa myID
-            } else {
-                /* fjärr-orm → koordinater från servern  */
+            if (i == myID)
+            {
+
+                updateSnake(snakes[i], true, mx, my);
+            }
+            else
+            {
+
                 SnakeInfo *si = &pGame->serverData.snakes[i];
                 updateSnake(snakes[i], false, si->x, si->y);
-                if (!si->alive) killSnake(snakes[i]);
+                if (!si->alive)
+                    killSnake(snakes[i]);
             }
         }
 
-        /* 6. Skicka MIN nya position till servern       */
         int headX = getSnakeHeadX(snakes[myID]);
         int headY = getSnakeHeadY(snakes[myID]);
-        sendSnakePosition(pGame, mx, my); //Skicka "get mouse state" Ulrika tips, skicka mus data och inte vart huvudet är
- 
-        /* 7. Uppdatera timer-text                       */
+        sendSnakePosition(pGame, mx, my);
+
         int curTime = (SDL_GetTicks64() - startTime) / 1000;
-        if (curTime > gameTime) {
+        if (curTime > gameTime)
+        {
             gameTime = curTime;
-            if (timerTex) SDL_DestroyTexture(timerTex);
+            if (timerTex)
+                SDL_DestroyTexture(timerTex);
 
             char buf[32];
-            sprintf(buf, "%02d:%02d", gameTime/60, gameTime%60);
+            sprintf(buf, "%02d:%02d", gameTime / 60, gameTime % 60);
             SDL_Surface *surf = TTF_RenderText_Solid(font, buf, txtColor);
-            timerTex  = SDL_CreateTextureFromSurface(renderer, surf);
-            timerRect = (SDL_Rect){10,10, surf->w, surf->h};
+            timerTex = SDL_CreateTextureFromSurface(renderer, surf);
+            timerRect = (SDL_Rect){10, 10, surf->w, surf->h};
             SDL_FreeSurface(surf);
         }
 
-        if (!isSnakeAlive(snakes[myID]) && !resultShown) {
+        if (!isSnakeAlive(snakes[myID]) && !resultShown)
+        {
             resultShown = true;
             int choice = showResult(renderer, false, (float)gameTime);
-            if (choice == 0) {
-                isRunning = false; // Spelaren vill avsluta
+            if (choice == 0)
+            {
+                isRunning = false;
             }
-            // Om choice == 1 (stanna kvar), gör ingenting. Spelaren tittar bara.
         }
-        /* 8. Render                                     */
-        SDL_SetRenderDrawColor(renderer, 0,0,0,255);
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, background, NULL, NULL);
 
-        for (int i = 0; i < MAX_PLAYERS; ++i){
+        for (int i = 0; i < MAX_PLAYERS; ++i)
+        {
             if (!snakes[i] || !isSnakeAlive(snakes[i]))
                 continue;
-            // Rita inte min egen orm om jag har dött och förlustskärmen har visats
+
             if (i == myID && resultShown)
                 continue;
-                drawSnake(snakes[i]);
+            drawSnake(snakes[i]);
         }
-        
+
         if (timerTex)
             SDL_RenderCopy(renderer, timerTex, NULL, &timerRect);
 
         SDL_RenderPresent(renderer);
-        SDL_Delay(16);                         /* ≈60 fps                       */
+        SDL_Delay(16);
     }
 
-    /* ---------- städa upp ---------- */
-    if (timerTex) SDL_DestroyTexture(timerTex);
+    if (timerTex)
+        SDL_DestroyTexture(timerTex);
     TTF_CloseFont(font);
 
     return (GameResult){
-        .win  = isSnakeAlive(snakes[myID]),
-        .time = (float)gameTime
-    };
+        .win = isSnakeAlive(snakes[myID]),
+        .time = (float)gameTime};
 }
 
 int initSnakeClient(Game *pGame, const char *ipAddress)
@@ -347,7 +346,7 @@ int initSnakeClient(Game *pGame, const char *ipAddress)
         SDL_Log("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
         return 0;
     }
-    printf("Successfully connected to server %s:%d\n", ipAddress, SERVER_PORT); // Debugging här
+    printf("Successfully connected to server %s:%d\n", ipAddress, SERVER_PORT);
 
     pGame->packet = SDLNet_AllocPacket(512);
     if (!pGame->packet)
@@ -356,14 +355,12 @@ int initSnakeClient(Game *pGame, const char *ipAddress)
         return 0;
     }
 
-    // Skicka JOIN
     const char *joinMsg = "JOIN";
     memcpy(pGame->packet->data, joinMsg, strlen(joinMsg) + 1);
     pGame->packet->address = pGame->serverAddr;
     pGame->packet->len = strlen(joinMsg) + 1;
     SDLNet_UDP_Send(pGame->udpSocket, -1, pGame->packet);
 
-    // Vänta på clientID
     Uint32 start = SDL_GetTicks();
     while (SDL_GetTicks() - start < 5000)
     {
@@ -373,7 +370,7 @@ int initSnakeClient(Game *pGame, const char *ipAddress)
             memcpy(&clientID, pGame->packet->data, sizeof(int));
             pGame->playerIndex = clientID;
             pGame->playerIndexSet = true;
-        
+
             printf(" My clientID received from the server: %d\n", clientID);
             break;
         }
@@ -392,7 +389,7 @@ int initSnakeClient(Game *pGame, const char *ipAddress)
 void sendSnakePosition(Game *pGame, int x, int y)
 {
     if (pGame->state != ONGOING)
-        return; // Skicka inget om spelet inte är igång
+        return;
 
     ClientData data = {0};
     data.x = x;
@@ -401,7 +398,7 @@ void sendSnakePosition(Game *pGame, int x, int y)
     if (pGame->snakes[pGame->playerIndex])
         data.alive = isSnakeAlive(pGame->snakes[pGame->playerIndex]);
     else
-        data.alive = true; // weird
+        data.alive = true;
     data.state = pGame->state;
 
     memcpy(pGame->packet->data, &data, sizeof(ClientData));
@@ -417,7 +414,7 @@ void receiveServerUpdate(Game *pGame)
 
         ServerData serverData;
         memcpy(&serverData, pGame->packet->data, sizeof(ServerData));
-        pGame->serverData = serverData;   
+        pGame->serverData = serverData;
         printf(" ServerData.numPlayers = %d\n", serverData.numPlayers);
 
         pGame->state = serverData.state;
@@ -425,7 +422,7 @@ void receiveServerUpdate(Game *pGame)
 
         if (!pGame->playerIndexSet)
         {
-            // Sätt korrekt playerIndex (inte alltid 0!)
+
             for (int i = 0; i < serverData.numPlayers; i++)
             {
                 if (serverData.snakes[i].x != 0 || serverData.snakes[i].y != 0)
@@ -437,14 +434,13 @@ void receiveServerUpdate(Game *pGame)
                 }
             }
         }
-        printf("Received server data: state = %d, num players = %d\n", pGame->state, serverData.numPlayers); // Debugging här
+        printf("Received server data: state = %d, num players = %d\n", pGame->state, serverData.numPlayers);
         printf("Num players in serverData: %d\n", serverData.numPlayers);
 
         for (int i = 0; i < serverData.numPlayers; i++)
         {
             SnakeInfo *s = &serverData.snakes[i];
             printf(" Updating snake %d: position (%d, %d), alive: %d\n", s->clientID, s->x, s->y, s->alive);
-
         }
     }
 }
